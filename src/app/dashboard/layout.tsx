@@ -10,6 +10,8 @@ interface DashboardLayoutProps {
   children: ReactNode
 }
 
+import { AppShell } from '@/components/layout/app-shell'
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [user, setUser] = useState<User | null>(null)
   const supabase = createClient()
@@ -23,13 +25,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [supabase])
 
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col")}>
-      {/* Header */}
-      <Header user={user} />
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 overflow-auto">
-        {children}
-      </main>
-    </div>
+    <AppShell>
+      <div className={cn("min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col")}>
+        {/* Header */}
+        <Header user={user} />
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </AppShell>
   )
 }

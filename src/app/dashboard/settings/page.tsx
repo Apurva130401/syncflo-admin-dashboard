@@ -1,26 +1,82 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
-import { Settings, User, Bell, Shield, Palette } from 'lucide-react'
+import { Settings, User, Shield } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SettingsPage() {
-    const [notifications, setNotifications] = useState({
-        email: true,
-        push: false,
-        sms: true,
-    })
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
+    const supabase = createClient()
 
     const [profile, setProfile] = useState({
-        name: 'John Doe',
-        email: 'john@example.com',
+        firstName: '',
+        lastName: '',
+        email: '',
         company: 'SyncFlo Inc.',
     })
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('first_name, last_name, email')
+                        .eq('id', user.id)
+                        .single()
+
+                    if (profileData) {
+                        setProfile({
+                            firstName: profileData.first_name || '',
+                            lastName: profileData.last_name || '',
+                            email: profileData.email || '',
+                            company: 'SyncFlo Inc.',
+                        })
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchProfile()
+    }, [supabase])
+
+    const handleSaveProfile = async () => {
+        setSaving(true)
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        first_name: profile.firstName,
+                        last_name: profile.lastName,
+                    })
+                    .eq('id', user.id)
+
+                if (error) {
+                    console.error('Error updating profile:', error)
+                    alert('Failed to update profile')
+                } else {
+                    alert('Profile updated successfully!')
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            alert('An error occurred')
+        } finally {
+            setSaving(false)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -42,79 +98,59 @@ export default function SettingsPage() {
                         <CardDescription>Update your personal information and preferences</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input
-                                id="name"
-                                value={profile.name}
-                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={profile.email}
-                                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="company">Company</Label>
-                            <Input
-                                id="company"
-                                value={profile.company}
-                                onChange={(e) => setProfile({ ...profile, company: e.target.value })}
-                            />
-                        </div>
-                        <Button className="w-full">Save Changes</Button>
+                        {loading ? (
+                            <div className="text-center py-4">Loading profile...</div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="firstName">First Name</Label>
+                                        <Input
+                                            id="firstName"
+                                            value={profile.firstName}
+                                            onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="lastName">Last Name</Label>
+                                        <Input
+                                            id="lastName"
+                                            value={profile.lastName}
+                                            onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={profile.email}
+                                        disabled
+                                        className="bg-gray-50"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="company">Company</Label>
+                                    <Input
+                                        id="company"
+                                        value={profile.company}
+                                        disabled
+                                        className="bg-gray-50"
+                                    />
+                                </div>
+                                <Button
+                                    className="w-full"
+                                    onClick={handleSaveProfile}
+                                    disabled={saving}
+                                >
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </Button>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Notification Settings */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Bell className="h-5 w-5" />
-                            Notifications
-                        </CardTitle>
-                        <CardDescription>Configure how you receive notifications</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label>Email Notifications</Label>
-                                <p className="text-sm text-muted-foreground">Receive updates via email</p>
-                            </div>
-                            <Switch
-                                checked={notifications.email}
-                                onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                            />
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label>Push Notifications</Label>
-                                <p className="text-sm text-muted-foreground">Receive push notifications</p>
-                            </div>
-                            <Switch
-                                checked={notifications.push}
-                                onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
-                            />
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label>SMS Notifications</Label>
-                                <p className="text-sm text-muted-foreground">Receive text messages</p>
-                            </div>
-                            <Switch
-                                checked={notifications.sms}
-                                onCheckedChange={(checked) => setNotifications({ ...notifications, sms: checked })}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
 
                 {/* Security Settings */}
                 <Card>
@@ -142,38 +178,6 @@ export default function SettingsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Appearance Settings */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Palette className="h-5 w-5" />
-                            Appearance
-                        </CardTitle>
-                        <CardDescription>Customize the look and feel of your dashboard</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Theme</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="outline" className="justify-start">
-                                    Light
-                                </Button>
-                                <Button variant="outline" className="justify-start">
-                                    Dark
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Language</Label>
-                            <select className="w-full p-2 border rounded-md">
-                                <option>English</option>
-                                <option>Spanish</option>
-                                <option>French</option>
-                            </select>
-                        </div>
-                        <Button className="w-full">Save Preferences</Button>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     )

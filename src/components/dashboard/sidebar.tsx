@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react'
 
 interface NavItem {
@@ -43,6 +44,7 @@ const navigation: NavItem[] = [
   // Support
   { name: 'Support', type: 'group' },
   { name: 'Support Tickets', href: '/dashboard/support-tickets', icon: HelpCircle, type: 'single' },
+  { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare, type: 'single' },
 
   // System
   { name: 'System', type: 'group' },
@@ -156,7 +158,7 @@ export function Sidebar({ className, isOpen, onClose, collapsed = false, onToggl
     // Render group header
     if (item.type === 'group' && !hasChildren) {
       const tourData = item.name === 'AI Products' ? 'ai-products' :
-                      item.name === 'Account & Support' ? 'settings' : undefined
+        item.name === 'Account & Support' ? 'settings' : undefined
 
       return (
         <motion.li
@@ -178,11 +180,11 @@ export function Sidebar({ className, isOpen, onClose, collapsed = false, onToggl
 
     if (item.type === 'single' || !hasChildren) {
       const itemTourData = item.name === 'Dashboard' ? 'dashboard' :
-                          item.name === 'Analytics' ? 'analytics' :
-                          item.name === 'Overview' && item.href === '/dashboard/voice' ? 'voice-overview' :
-                          item.name === 'Inbox' && item.href === '/dashboard/whatsapp/inbox' ? 'whatsapp-inbox' :
-                          item.name === 'Campaigns' && item.href?.includes('whatsapp') ? 'whatsapp-campaigns' :
-                          item.name === 'Campaigns' && item.href?.includes('voice') ? 'voice-campaigns' : undefined
+        item.name === 'Analytics' ? 'analytics' :
+          item.name === 'Overview' && item.href === '/dashboard/voice' ? 'voice-overview' :
+            item.name === 'Inbox' && item.href === '/dashboard/whatsapp/inbox' ? 'whatsapp-inbox' :
+              item.name === 'Campaigns' && item.href?.includes('whatsapp') ? 'whatsapp-campaigns' :
+                item.name === 'Campaigns' && item.href?.includes('voice') ? 'voice-campaigns' : undefined
 
       return (
         <motion.li
@@ -236,7 +238,7 @@ export function Sidebar({ className, isOpen, onClose, collapsed = false, onToggl
     }
 
     const sectionTourData = item.name === 'Voice' ? 'voice-section' :
-                           item.name === 'WhatsApp' ? 'whatsapp-section' : undefined
+      item.name === 'WhatsApp' ? 'whatsapp-section' : undefined
 
     return (
       <motion.li
