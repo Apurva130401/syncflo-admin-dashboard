@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
         const { data, error } = await resend.emails.send({
             from: 'SyncFlo AI <support@updates.syncflo.xyz>',
-            reply_to: 'apurvamishra13@gmail.com',
+            replyTo: 'support@updates.syncflo.xyz',
             to: [to],
             subject: subject,
             html: `<p>${message}</p>`,
