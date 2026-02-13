@@ -11,7 +11,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   useEffect(() => {
+    // Skip auth checks on public routes to prevent redirect loops
+    const publicRoutes = ['/login', '/unauthorized']
+    const isPublicRoute = publicRoutes.includes(pathname)
+
     const checkAdminAccess = async () => {
+      if (isPublicRoute) return
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -34,7 +40,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         router.push('/login')
-      } else if (event === 'SIGNED_IN') {
+      } else if (event === 'SIGNED_IN' && !isPublicRoute) {
         await checkAdminAccess()
       }
     })

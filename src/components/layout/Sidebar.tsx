@@ -16,7 +16,8 @@ import {
     Layers,
     Activity,
     HelpCircle,
-    MessageSquare
+    MessageSquare,
+    ShieldCheck
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppShell } from './app-shell-context'
@@ -26,6 +27,7 @@ const sidebarItems = [
     { icon: Users, label: 'All Users', href: '/dashboard/users' },
     { icon: CreditCard, label: 'Subscriptions', href: '/dashboard/subscriptions' },
     { icon: Activity, label: 'User Activity', href: '/dashboard/activity' },
+    { icon: ShieldCheck, label: 'Verifications', href: '/dashboard/verifications' },
     { icon: HelpCircle, label: 'Support Tickets', href: '/dashboard/support-tickets' },
     { icon: MessageSquare, label: 'Inquiries', href: '/dashboard/inquiries' },
     { icon: BarChart3, label: 'System Monitoring', href: '/dashboard/monitoring' },

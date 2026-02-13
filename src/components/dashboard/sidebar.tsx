@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  MessageSquare
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react'
 
 interface NavItem {
@@ -40,6 +41,7 @@ const navigation: NavItem[] = [
   { name: 'User Management', type: 'group' },
   { name: 'All Users', href: '/dashboard/users', icon: Users, type: 'single' },
   { name: 'User Activity', href: '/dashboard/activity', icon: Activity, type: 'single' },
+  { name: 'Verifications', href: '/dashboard/verifications', icon: ShieldCheck, type: 'single' },
 
   // Support
   { name: 'Support', type: 'group' },
