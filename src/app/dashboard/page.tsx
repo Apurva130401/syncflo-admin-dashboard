@@ -10,6 +10,8 @@ import { OverviewVerifications } from '@/components/dashboard/overview-verificat
 import { OverviewTickets } from '@/components/dashboard/overview-tickets'
 import { EmployeeDashboard } from '@/components/dashboard/employee/employee-dashboard'
 import { AttendanceWidget } from '@/components/dashboard/employee/attendance-widget'
+import { PipelineChart } from '@/components/dashboard/crm/pipeline-chart'
+import { RecentPayroll } from '@/components/dashboard/payroll/recent-payroll'
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
@@ -112,8 +114,10 @@ export default function AdminDashboard() {
         {/* Left Column (Operational Widgets) */}
         <div className="lg:col-span-5 space-y-8">
           {role !== 'admin' && <AttendanceWidget />}
-          <OverviewVerifications />
-          <OverviewTickets />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <PipelineChart />
+            <RecentPayroll />
+          </div>
         </div>
 
         {/* Right Column (Actions) */}
