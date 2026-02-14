@@ -13,6 +13,7 @@ import Cropper from 'react-easy-crop'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import QRCode from 'react-qr-code'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true)
@@ -202,6 +203,51 @@ export default function SettingsPage() {
 
     // Generate QR Code Data (Verification Link)
     const qrData = `https://admin.syncflo.xyz/verify/${profile.employee_id}`
+
+    if (loading) {
+        return (
+            <div className="space-y-8 max-w-5xl mx-auto">
+                <div className="mb-8 space-y-2">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-6 w-96" />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Left Column Skeleton */}
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-2">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-9 w-24" />
+                        </div>
+                        {/* ID Card Skeleton */}
+                        <div className="relative w-full aspect-[1.586/1] rounded-2xl overflow-hidden border border-slate-200 p-6 flex flex-col justify-between">
+                            <div className="flex justify-between items-start">
+                                <Skeleton className="h-8 w-24" />
+                                <div className="flex flex-col items-end gap-2">
+                                    <Skeleton className="h-20 w-20 rounded-full" />
+                                    <Skeleton className="h-5 w-20" />
+                                </div>
+                            </div>
+                            <div className="space-y-2 mt-2">
+                                <Skeleton className="h-3 w-16" />
+                                <Skeleton className="h-8 w-48" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 mt-auto pt-3 border-t border-slate-100/50 mr-20">
+                                <Skeleton className="h-4 w-48" />
+                                <Skeleton className="h-4 w-48" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column Skeleton */}
+                    <div className="space-y-4">
+                        <Skeleton className="h-64 w-full rounded-xl" />
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
