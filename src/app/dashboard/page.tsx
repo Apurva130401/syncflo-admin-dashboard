@@ -26,7 +26,7 @@ export default function AdminDashboard() {
       try {
         setStatsLoading(true)
 
-        // Fetch all stats in parallel
+        // Fetch all stats in parallel //
         const [usersRes, verificationsRes, ticketsRes] = await Promise.all([
           fetch('/api/admin/users'),
           fetch('/api/admin/verifications'),
