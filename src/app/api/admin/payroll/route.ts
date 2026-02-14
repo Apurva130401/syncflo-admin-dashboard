@@ -68,7 +68,6 @@ export async function POST(request: Request) {
                 base_salary,
                 bonuses,
                 deductions,
-                deductions,
                 status: status || 'Pending',
                 currency: body.currency || 'USD',
                 payment_date: status === 'Paid' ? new Date().toISOString() : null

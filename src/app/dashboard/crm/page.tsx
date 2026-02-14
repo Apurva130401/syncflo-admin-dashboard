@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 const STAGES = ['New', 'Contacted', 'Proposal', 'Negotiation', 'Closed']
 
 export default function CRMPage() {
-    const [leads, setLeads] = useState([])
+    const [leads, setLeads] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [open, setOpen] = useState(false)
@@ -48,7 +48,7 @@ export default function CRMPage() {
             })
             if (res.ok) {
                 setOpen(false)
-                setNewLead({ name: '', company: '', email: '', phone: '', value: 0, status: 'New', source: '' })
+                setNewLead({ name: '', company: '', email: '', phone: '', value: 0, status: 'New', source: '', currency: 'USD' })
                 fetchLeads()
             }
         } catch (e) {

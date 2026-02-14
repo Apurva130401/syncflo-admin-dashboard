@@ -10,26 +10,7 @@ export async function createClient() {
         {
             cookies: {
                 getAll() {
-                    try {
-                        if (typeof cookieStore.getAll === 'function') {
-                            const cookies = cookieStore.getAll()
-                            return cookies
-                        }
-                    } catch (e) {
-                        // console.error('DEBUG: cookieStore.getAll failed', e)
-                    }
-                    // Fallback: Try identifying as iterable (Next.js 15/16 ResponseCookies)
-                    try {
-                        const cookies = []
-                        // @ts-ignore
-                        for (const cookie of cookieStore) {
-                            cookies.push(cookie)
-                        }
-                        return cookies
-                    } catch (e) {
-                        console.error('DEBUG: cookieStore fallback failed', e)
-                        return []
-                    }
+                    return cookieStore.getAll()
                 },
                 setAll(cookiesToSet) {
                     try {

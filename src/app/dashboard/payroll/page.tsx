@@ -14,10 +14,10 @@ import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 
 export default function PayrollPage() {
-    const [payroll, setPayroll] = useState([])
+    const [payroll, setPayroll] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [role, setRole] = useState('')
-    const [users, setUsers] = useState([]) // For selecting employee in form
+    const [users, setUsers] = useState<any[]>([]) // For selecting employee in form
     const [open, setOpen] = useState(false)
 
     // New Payroll Entry
@@ -25,8 +25,6 @@ export default function PayrollPage() {
         user_id: '',
         month: format(new Date(), 'yyyy-MM'),
         base_salary: 0,
-        bonuses: 0,
-        deductions: 0,
         bonuses: 0,
         deductions: 0,
         currency: 'USD',

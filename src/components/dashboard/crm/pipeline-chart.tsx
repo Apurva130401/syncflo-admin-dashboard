@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 const COLORS = ['#94a3b8', '#60a5fa', '#3b82f6', '#2563eb', '#16a34a']
 
 export function PipelineChart() {
-    const [data, setData] = useState([])
+    const [data, setData] = useState<{ name: string; value: number; totalValue: number }[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {

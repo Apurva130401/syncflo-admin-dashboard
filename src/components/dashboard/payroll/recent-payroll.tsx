@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export function RecentPayroll() {
-    const [payroll, setPayroll] = useState([])
+    const [payroll, setPayroll] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
