@@ -14,12 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Slider } from '@/components/ui/slider'
 import QRCode from 'react-qr-code'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useUser } from '@/providers/user-provider'
 
 export default function SettingsPage() {
-    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const supabase = createClient()
+    const { user, profile: userProfile, loading, refreshProfile } = useUser()
 
     const [profile, setProfile] = useState({
         first_name: '',
@@ -41,38 +42,19 @@ export default function SettingsPage() {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (user) {
-                    const { data: profileData } = await supabase
-                        .from('profiles')
-                        .select('first_name, last_name, email, company_name, personal_phone, avatar_url, employee_id')
-                        .eq('id', user.id)
-                        .single()
-
-                    if (profileData) {
-                        setProfile({
-                            first_name: profileData.first_name || '',
-                            last_name: profileData.last_name || '',
-                            email: profileData.email || '',
-                            company_name: profileData.company_name || 'SyncFlo Inc.',
-                            personal_phone: profileData.personal_phone || '',
-                            avatar_url: profileData.avatar_url || '',
-                            employee_id: profileData.employee_id || generateEmployeeId(),
-                            created_at: user.created_at || new Date().toISOString()
-                        })
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching profile:', error)
-            } finally {
-                setLoading(false)
-            }
+        if (user && userProfile) {
+            setProfile({
+                first_name: userProfile.first_name || '',
+                last_name: userProfile.last_name || '',
+                email: userProfile.email || '',
+                company_name: userProfile.company_name || 'SyncFlo Inc.',
+                personal_phone: userProfile.personal_phone || '',
+                avatar_url: userProfile.avatar_url || '',
+                employee_id: userProfile.employee_id || generateEmployeeId(),
+                created_at: user.created_at || new Date().toISOString()
+            })
         }
-
-        fetchProfile()
-    }, [supabase])
+    }, [user, userProfile])
 
     const generateEmployeeId = () => {
         return 'SF-' + Math.floor(1000 + Math.random() * 9000)
@@ -155,6 +137,7 @@ export default function SettingsPage() {
                 .getPublicUrl(filePath)
 
             setProfile({ ...profile, avatar_url: urlData.publicUrl })
+            refreshProfile()
             setIsCropping(false)
             setCropImage(null)
             // Reset file input
@@ -189,6 +172,7 @@ export default function SettingsPage() {
                     console.error('Error updating profile:', error)
                     alert('Failed to update profile')
                 } else {
+                    if (isEditing) refreshProfile() // Update global context
                     setIsEditing(false)
                     alert('Profile updated successfully!')
                 }

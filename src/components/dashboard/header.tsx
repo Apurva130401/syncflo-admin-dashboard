@@ -8,47 +8,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Settings, LogOut, User, Menu } from 'lucide-react'
 
-// Define a type for the user object that the Header will receive
-interface HeaderProps {
-  user: {
-    id?: string
-    email?: string
-    user_metadata?: {
-      name?: string
-      avatar_url?: string
-    }
-  } | null
-  onMenuClick?: () => void
-}
+import { useAppShell } from '@/components/layout/app-shell-context'
+import { useUser } from '@/providers/user-provider'
 
-interface Profile {
-  first_name: string
-  last_name: string
-  avatar_url?: string
-}
-
-export function Header({ user, onMenuClick }: HeaderProps) {
+export function Header() {
   const router = useRouter()
   const supabase = createClient()
-  const [profile, setProfile] = useState<Profile | null>(null)
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (user?.email) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, avatar_url')
-          .eq('id', user.id)
-          .single()
-
-        if (data && !error) {
-          setProfile(data)
-        }
-      }
-    }
-
-    fetchProfile()
-  }, [user, supabase])
+  const { user, profile } = useUser()
+  const { toggleMobile } = useAppShell()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -63,7 +30,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
       .toUpperCase()
   }
 
-  const displayName = profile?.first_name || user?.user_metadata?.name || 'User'
+  const displayName = profile?.first_name ? `${profile.first_name} ${profile.last_name}` : user?.user_metadata?.name || 'User'
   const userEmail = user?.email || 'No email provided'
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url
 
@@ -76,7 +43,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               variant="ghost"
               size="icon"
               className="mr-4 md:hidden"
-              onClick={onMenuClick}
+              onClick={toggleMobile}
             >
               <Menu className="h-5 w-5" />
             </Button>

@@ -57,40 +57,24 @@ const allItems = [
     { icon: Settings, label: 'Settings', href: '/dashboard/settings', roles: ['all'] },
 ]
 
+import { useUser } from '@/providers/user-provider'
+
 export function Sidebar() {
     const pathname = usePathname()
     const { sidebarCollapsed, toggleSidebar } = useAppShell()
-    const [navItems, setNavItems] = useState<typeof allItems>([])
+    const { profile } = useUser()
 
-    useEffect(() => {
-        const fetchPermissions = async () => {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+    const navItems = React.useMemo(() => {
+        const role = profile?.role || 'user'
 
-            if (!user) return
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single()
-
-            const role = profile?.role || 'user'
-
-            // Filter items
-            const filtered = allItems.filter(item => {
-                if (item.roles.includes('all')) return true
-                if (item.roles.includes(role)) return true
-                // Legacy mismatch handling: 'super_admin' treated as 'admin'
-                if (role === 'super_admin' && item.roles.includes('admin')) return true
-                return false
-            })
-
-            setNavItems(filtered)
-        }
-
-        fetchPermissions()
-    }, [])
+        return allItems.filter(item => {
+            if (item.roles.includes('all')) return true
+            if (item.roles.includes(role)) return true
+            // Legacy mismatch handling: 'super_admin' treated as 'admin'
+            if (role === 'super_admin' && item.roles.includes('admin')) return true
+            return false
+        })
+    }, [profile])
 
     return (
         <aside
