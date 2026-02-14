@@ -174,12 +174,12 @@ export default function SupportTicketsPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="w-full sm:max-w-[90vw] lg:max-w-7xl max-h-[90vh] overflow-hidden p-6 gap-6 bg-white text-slate-900 border-none shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Ticket Details - {selectedTicket?.subject}</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Ticket Details - {selectedTicket?.subject}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[75vh]">
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[75vh]">
+            <div className="space-y-6 overflow-y-auto pr-2">
               <div>
                 <h3 className="font-semibold">Ticket Information</h3>
                 <p><strong>User:</strong> {selectedTicket?.user_email}</p>

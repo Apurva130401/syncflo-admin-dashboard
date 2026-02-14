@@ -18,8 +18,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser()
-      setUser(data.user)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // Check role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile && profile.role === 'user') {
+          window.location.href = '/' // Redirect restricted users
+          return
+        }
+        setUser(user)
+      }
     }
     getUser()
   }, [supabase])

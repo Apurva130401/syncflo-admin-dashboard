@@ -31,8 +31,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         .eq('id', user.id)
         .single()
 
-      if (profile?.role !== 'admin') {
-        router.push('/unauthorized')
+      const allowedRoles = ['admin', 'manager', 'support', 'employee', 'accountant', 'developer']
+
+      if (!allowedRoles.includes(profile?.role)) {
+        // Redirect standard users or roles not meant for dashboard
+        router.push('/unauthorized') // or '/' home
         return
       }
     }

@@ -1,8 +1,10 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 import {
     LayoutDashboard,
     Users,
@@ -12,31 +14,83 @@ import {
     FileText,
     LogOut,
     ChevronLeft,
-    ChevronRight,
-    Layers,
     Activity,
     HelpCircle,
     MessageSquare,
-    ShieldCheck
+    ShieldCheck,
+    Target,
+    ClipboardList,
+    DollarSign,
+    Code,
+    Clock
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppShell } from './app-shell-context'
 
-const sidebarItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-    { icon: Users, label: 'All Users', href: '/dashboard/users' },
-    { icon: CreditCard, label: 'Subscriptions', href: '/dashboard/subscriptions' },
-    { icon: Activity, label: 'User Activity', href: '/dashboard/activity' },
-    { icon: ShieldCheck, label: 'Verifications', href: '/dashboard/verifications' },
-    { icon: HelpCircle, label: 'Support Tickets', href: '/dashboard/support-tickets' },
-    { icon: MessageSquare, label: 'Inquiries', href: '/dashboard/inquiries' },
-    { icon: BarChart3, label: 'System Monitoring', href: '/dashboard/monitoring' },
-    { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+// Define all possible items with their required roles/permissions implicit in the logic
+const allItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['all'] },
+
+    // Growth / Employee
+    { icon: Target, label: 'CRM', href: '/dashboard/crm', roles: ['employee', 'admin', 'manager'] },
+    { icon: ClipboardList, label: 'My Tasks', href: '/dashboard/tasks', roles: ['employee', 'admin', 'manager'] },
+
+    // Admin / Manager Stats
+    { icon: Users, label: 'All Users', href: '/dashboard/users', roles: ['admin', 'manager', 'support'] },
+    { icon: Activity, label: 'User Activity', href: '/dashboard/activity', roles: ['admin', 'manager'] },
+
+    // Support / Verifications
+    { icon: ShieldCheck, label: 'Verifications', href: '/dashboard/verifications', roles: ['admin', 'manager', 'support'] },
+    { icon: Clock, label: 'Attendance', href: '/dashboard/admin/attendance', roles: ['admin', 'manager'] },
+    { icon: HelpCircle, label: 'Support Tickets', href: '/dashboard/support-tickets', roles: ['admin', 'manager', 'support'] },
+    { icon: MessageSquare, label: 'Inquiries', href: '/dashboard/inquiries', roles: ['admin', 'manager', 'support'] },
+
+    // Finance
+    { icon: FileText, label: 'Invoices', href: '/dashboard/invoices', roles: ['admin', 'accountant'] },
+    { icon: DollarSign, label: 'Payroll', href: '/dashboard/payroll', roles: ['all'] },
+    { icon: DollarSign, label: 'Revenue', href: '/dashboard/revenue', roles: ['admin', 'accountant'] },
+    { icon: CreditCard, label: 'Subscriptions', href: '/dashboard/subscriptions', roles: ['admin', 'manager'] },
+
+    // System
+    { icon: BarChart3, label: 'System Monitoring', href: '/dashboard/monitoring', roles: ['admin', 'developer'] },
+    { icon: Code, label: 'API & Logs', href: '/dashboard/logs', roles: ['admin', 'developer'] },
+    { icon: Settings, label: 'Settings', href: '/dashboard/settings', roles: ['all'] },
 ]
 
 export function Sidebar() {
     const pathname = usePathname()
     const { sidebarCollapsed, toggleSidebar } = useAppShell()
+    const [navItems, setNavItems] = useState<typeof allItems>([])
+
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) return
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single()
+
+            const role = profile?.role || 'user'
+
+            // Filter items
+            const filtered = allItems.filter(item => {
+                if (item.roles.includes('all')) return true
+                if (item.roles.includes(role)) return true
+                // Legacy mismatch handling: 'super_admin' treated as 'admin'
+                if (role === 'super_admin' && item.roles.includes('admin')) return true
+                return false
+            })
+
+            setNavItems(filtered)
+        }
+
+        fetchPermissions()
+    }, [])
 
     return (
         <aside
@@ -75,8 +129,8 @@ export function Sidebar() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-2 space-y-2">
-                    {sidebarItems.map((item) => {
+                <nav className="flex-1 px-2 space-y-2 overflow-y-auto">
+                    {navItems.map((item) => {
                         const isActive = pathname === item.href
                         return (
                             <Link
@@ -95,8 +149,6 @@ export function Sidebar() {
                                 )}
                                 <item.icon className={cn("h-5 w-5 transition-colors", isActive ? "text-blue-400" : "group-hover:text-white")} />
                                 {!sidebarCollapsed && <span className="font-medium">{item.label}</span>}
-
-                                {/* Tooltip for collapsed state could go here */}
                             </Link>
                         )
                     })}
@@ -109,6 +161,11 @@ export function Sidebar() {
                             "flex items-center gap-3 px-3 py-2.5 rounded-xl w-full transition-all duration-200 text-slate-400 hover:text-red-400 hover:bg-red-500/10",
                             sidebarCollapsed && "justify-center px-2"
                         )}
+                        onClick={async () => {
+                            const supabase = createClient()
+                            await supabase.auth.signOut()
+                            window.location.href = '/login'
+                        }}
                     >
                         <LogOut className="h-5 w-5" />
                         {!sidebarCollapsed && <span className="font-medium">Logout</span>}
