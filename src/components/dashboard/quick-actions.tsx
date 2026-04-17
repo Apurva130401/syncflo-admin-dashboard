@@ -11,8 +11,8 @@ export function QuickActions() {
             label: 'Add User',
             icon: UserPlus,
             href: '/dashboard/users?action=new',
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 hover:bg-blue-100',
+            color: 'text-amber-600',
+            bg: 'bg-amber-50 hover:bg-amber-100',
         },
         {
             label: 'Verify Business',
@@ -25,8 +25,8 @@ export function QuickActions() {
             label: 'View Reports',
             icon: BarChart3,
             href: '/dashboard/monitoring',
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50 hover:bg-indigo-100',
+            color: 'text-emerald-600',
+            bg: 'bg-emerald-50 hover:bg-emerald-100',
         },
         {
             label: 'Support Tickets',

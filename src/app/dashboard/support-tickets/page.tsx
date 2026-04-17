@@ -130,11 +130,18 @@ export default function SupportTicketsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mb-8 p-6 rounded-2xl bg-zinc-950/50 border border-white/5 backdrop-blur-sm">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-500 via-emerald-200 to-emerald-500 bg-clip-text text-transparent">
-          Support Tickets
-        </h1>
-        <p className="text-slate-600 mt-2 text-lg">Manage customer support requests and track resolutions</p>
+      <div className="mb-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Support Tickets
+          </h1>
+          <p className="text-slate-500 mt-1 text-sm">Manage customer support requests and track resolutions</p>
+        </div>
+        <div className="flex items-center gap-2">
+           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+             {tickets.length} Total Tickets
+           </Badge>
+        </div>
       </div>
 
       <Card>
@@ -198,23 +205,56 @@ export default function SupportTicketsPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="w-full sm:max-w-[90vw] lg:max-w-7xl max-h-[90vh] overflow-hidden p-6 gap-6 bg-white text-slate-900 border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Ticket Details - {selectedTicket?.subject}</DialogTitle>
+        <DialogContent className="w-full sm:max-w-[95vw] lg:max-w-5xl h-[100dvh] sm:h-[90vh] overflow-hidden p-0 sm:p-4 gap-0 bg-white text-slate-900 border-slate-200 shadow-2xl flex flex-col sm:rounded-2xl">
+          <DialogHeader className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <DialogTitle className="text-lg font-bold text-slate-900">
+              Ticket Details - <span className="text-emerald-600">{selectedTicket?.subject}</span>
+            </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[75vh]">
-            <div className="space-y-6 overflow-y-auto pr-2">
-              <div>
-                <h3 className="font-semibold">Ticket Information</h3>
-                <p><strong>User:</strong> {selectedTicket?.user_email}</p>
-                <p><strong>Subject:</strong> {selectedTicket?.subject}</p>
-                <p><strong>Description:</strong> {selectedTicket?.description}</p>
-                <p><strong>Status:</strong> {selectedTicket?.status}</p>
-                <p><strong>Priority:</strong> {selectedTicket?.priority}</p>
-                <p><strong>Created:</strong> {selectedTicket ? format(new Date(selectedTicket.created_at), 'PPP p') : ''}</p>
+          
+          <div className="flex-1 flex flex-col lg:flex-row gap-0 lg:gap-8 overflow-hidden">
+            {/* Ticket Information - Collapsible or scrollable sidebar */}
+            <div className="w-full lg:w-80 space-y-4 overflow-y-auto p-4 sm:p-0 bg-slate-50/30 lg:bg-transparent border-b lg:border-none border-slate-100">
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <h3 className="font-semibold text-emerald-600 text-sm uppercase tracking-wider">Information</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-slate-500 text-xs">User</span>
+                    <span className="font-medium text-slate-900 truncate">{selectedTicket?.user_email}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-slate-500 text-xs">Status</span>
+                    <div className="flex items-center gap-2">
+                       <Badge variant={getStatusColor(selectedTicket?.status || '')} className="capitalize py-0 h-5">
+                        {(selectedTicket?.status || '').replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-slate-500 text-xs">Priority</span>
+                    <Badge variant={getPriorityColor(selectedTicket?.priority || '')} className="w-fit capitalize py-0 h-5">
+                      {selectedTicket?.priority}
+                    </Badge>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-slate-500 text-xs">Created</span>
+                    <p className="text-slate-600">
+                      {selectedTicket ? format(new Date(selectedTicket.created_at), 'MMM dd, h:mm a') : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-2 hidden lg:block">
+                <h3 className="font-semibold text-emerald-600 text-sm uppercase tracking-wider">Description</h3>
+                <p className="text-sm text-slate-600 leading-relaxed max-h-40 overflow-y-auto pr-2">
+                  {selectedTicket?.description}
+                </p>
               </div>
             </div>
-            <div className="lg:col-span-2">
+
+            {/* Chat Section - Flexible height */}
+            <div className="flex-1 min-h-0 flex flex-col bg-slate-50 lg:rounded-xl overflow-hidden border border-slate-100 mt-4 lg:mt-0">
               {selectedTicket && <TicketChat ticketId={selectedTicket.id} />}
             </div>
           </div>

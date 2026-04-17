@@ -24,8 +24,8 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
             icon: Users,
             trend: '+12% from last month',
             trendColor: 'text-emerald-600',
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600',
+            iconBg: 'bg-emerald-100',
+            iconColor: 'text-emerald-600',
         },
         {
             title: 'Active Users',
@@ -34,8 +34,8 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
             icon: Activity,
             trend: '+5% from last week',
             trendColor: 'text-emerald-600',
-            iconBg: 'bg-indigo-100',
-            iconColor: 'text-indigo-600',
+            iconBg: 'bg-emerald-100',
+            iconColor: 'text-emerald-600',
         },
         {
             title: 'Open Tickets',
@@ -53,9 +53,9 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
             description: 'Requires review',
             icon: ShieldCheck,
             trend: (stats?.pendingVerifications ?? 0) > 0 ? 'Action Required' : 'All caught up',
-            trendColor: (stats?.pendingVerifications ?? 0) > 0 ? 'text-blue-600 font-medium' : 'text-slate-500',
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600',
+            trendColor: (stats?.pendingVerifications ?? 0) > 0 ? 'text-rose-600 font-medium' : 'text-slate-500',
+            iconBg: 'bg-rose-100',
+            iconColor: 'text-rose-600',
         },
     ]
 

@@ -63,7 +63,7 @@ export function SubscriptionBanner({ subscriptionStatus }: SubscriptionBannerPro
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="relative z-30 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white shadow-lg"
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 <div className="flex-shrink-0">

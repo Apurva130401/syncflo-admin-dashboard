@@ -14,15 +14,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useAppShell } from './app-shell-context'
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { toggleMobile } = useAppShell()
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 glass px-6 py-3 bg-white/80 backdrop-blur-md">
       <div className="flex items-center justify-between">
         {/* Mobile Menu Trigger (Hidden on Desktop) */}
-        <Button variant="ghost" size="icon" className="md:hidden mr-2 text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden mr-2 text-slate-600 hover:bg-slate-100 rounded-full"
+          onClick={toggleMobile}
+        >
           <Menu className="h-5 w-5" />
         </Button>
 

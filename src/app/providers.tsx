@@ -11,50 +11,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   useEffect(() => {
-    // Skip auth checks on public routes to prevent redirect loops
-    const publicRoutes = ['/login', '/unauthorized']
-    const isPublicRoute = publicRoutes.includes(pathname)
-
-    const checkAdminAccess = async () => {
-      if (isPublicRoute) return
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      // Check if user is admin
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      const allowedRoles = ['admin', 'manager', 'support', 'employee', 'accountant', 'developer']
-
-      if (!allowedRoles.includes(profile?.role)) {
-        // Redirect standard users or roles not meant for dashboard
-        router.push('/unauthorized') // or '/' home
-        return
-      }
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         router.push('/login')
-      } else if (event === 'SIGNED_IN' && !isPublicRoute) {
-        await checkAdminAccess()
       }
     })
-
-    // Initial check
-    checkAdminAccess()
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase, router, pathname])
+  }, [supabase, router])
 
   return (
     <AppShellProvider>

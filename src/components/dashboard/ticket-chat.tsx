@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,6 +29,13 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
     const [newMessage, setNewMessage] = useState('')
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+    }, [messages])
 
     useEffect(() => {
         fetchMessages()
@@ -127,67 +134,90 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
     }
 
     return (
-        <Card className="h-[700px] flex flex-col border-emerald-100/20 bg-zinc-950/50 backdrop-blur-sm">
-            <CardHeader className="border-b border-white/5">
-                <CardTitle className="text-emerald-500">Chat</CardTitle>
+        <Card className="h-full flex flex-col border-emerald-500/10 bg-white shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-slate-100 py-3 px-4 sm:py-4 sm:px-6 bg-slate-50/50 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-emerald-400 text-lg sm:text-xl font-semibold flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Live Support Chat
+                    </CardTitle>
+                </div>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-4 overflow-hidden">
-                <ScrollArea className="flex-1 pr-4 mb-4">
-                    <div className="space-y-4">
-                        {messages.map((message) => (
-                            <div
-                                key={message.id}
-                                className={`flex ${message.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
-                            >
+            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-slate-50/30">
+                <ScrollArea className="flex-1 w-full h-[300px] min-h-0">
+                    <div className="p-4 sm:p-6 space-y-4">
+                        {messages.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full py-20 text-slate-400 gap-2">
+                                <Send className="w-8 h-8 opacity-20" />
+                                <p className="text-sm">No messages yet. Start the conversation!</p>
+                            </div>
+                        ) : (
+                            messages.map((message) => (
                                 <div
-                                    className={`max-w-[80%] px-4 py-2 rounded-2xl ${message.sender_type === 'admin'
-                                        ? 'bg-emerald-600 text-white rounded-tr-none shadow-lg shadow-emerald-900/20'
-                                        : 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-white/5'
-                                        }`}
+                                    key={message.id}
+                                    className={`flex ${message.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
                                 >
-                                    <p className="text-sm leading-relaxed">{message.message}</p>
-                                    <div className="flex items-center justify-between gap-4 mt-1 opacity-50">
-                                        <p className="text-[10px]">
-                                            {format(new Date(message.created_at), 'HH:mm')}
+                                    <div
+                                        className={`max-w-[85%] sm:max-w-[80%] px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl transition-all duration-200 ${message.sender_type === 'admin'
+                                            ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-200'
+                                            : 'bg-white text-slate-900 rounded-tl-none border border-slate-200 shadow-sm'
+                                            }`}
+                                    >
+                                        <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
+                                            {message.message}
                                         </p>
+                                        <div className="flex items-center justify-end gap-2 mt-1.5 opacity-40">
+                                            <p className="text-[9px] sm:text-[10px] font-medium">
+                                                {format(new Date(message.created_at), 'HH:mm')}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
+                        <div ref={scrollRef} />
                     </div>
                 </ScrollArea>
-                <div className="space-y-2">
-                    <Textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault()
-                                sendMessage()
-                            }
-                        }}
-                        placeholder="Type your message... (Shift+Enter for new line)"
-                        disabled={sending}
-                        className="min-h-[80px] resize-none"
-                        rows={3}
-                    />
-                    <div className="flex gap-2 justify-end">
-                        <Button
-                            variant="outline"
-                            size="icon"
+                
+                <div className="mt-auto pt-2 sm:pt-4 border-t border-slate-100 bg-slate-50/50 px-2 sm:px-0">
+                    <div className="relative group p-1 sm:p-2">
+                        <Textarea
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    sendMessage()
+                                }
+                            }}
+                            placeholder="Type your message..."
                             disabled={sending}
-                            title="Attach file"
-                        >
-                            <Paperclip className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            onClick={sendMessage}
-                            disabled={sending || !newMessage.trim()}
-                            size="icon"
-                        >
-                            <Send className="h-4 w-4" />
-                        </Button>
+                            className="min-h-[60px] sm:min-h-[80px] w-full resize-none bg-white border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 pr-24 rounded-xl text-sm sm:text-base py-3 px-4 shadow-sm"
+                            rows={2}
+                        />
+                        <div className="absolute right-4 bottom-4 flex gap-1.5">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={sending}
+                                title="Attach file"
+                                className="h-8 w-8 sm:h-9 sm:w-9 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            >
+                                <Paperclip className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                            </Button>
+                            <Button
+                                onClick={sendMessage}
+                                disabled={sending || !newMessage.trim()}
+                                size="icon"
+                                className="h-8 w-8 sm:h-9 sm:w-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
+                            >
+                                <Send className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                            </Button>
+                        </div>
                     </div>
+                    <p className="text-[10px] text-slate-400 mt-2 ml-1 hidden sm:block">
+                        Press Enter to send, Shift+Enter for new line
+                    </p>
                 </div>
             </CardContent>
         </Card>

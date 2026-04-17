@@ -181,18 +181,18 @@ export default function VerificationsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mb-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 via-blue-800 to-slate-900 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-slate-900">
                         Business Verification
                     </h1>
-                    <p className="text-slate-500 mt-1">Review and approve business verification requests</p>
+                    <p className="text-slate-500 mt-1 text-sm">Review and approve business verification requests</p>
                 </div>
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search business..."
-                        className="pl-8"
+                        className="pl-8 bg-slate-50 border-slate-200 focus:border-emerald-500"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -200,11 +200,11 @@ export default function VerificationsPage() {
             </div>
 
             <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100 p-1">
-                    <TabsTrigger value="all">All Requests ({verifications.length})</TabsTrigger>
-                    <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
-                    <TabsTrigger value="verified">Verified ({verifiedCount})</TabsTrigger>
-                    <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 mb-6 bg-slate-100 p-1 rounded-xl">
+                    <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">All ({verifications.length})</TabsTrigger>
+                    <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">Pending ({pendingCount})</TabsTrigger>
+                    <TabsTrigger value="verified" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">Verified ({verifiedCount})</TabsTrigger>
+                    <TabsTrigger value="rejected" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">Rejected ({rejectedCount})</TabsTrigger>
                 </TabsList>
 
                 {['all', 'pending', 'verified', 'rejected'].map((tab) => (
@@ -263,64 +263,56 @@ export default function VerificationsPage() {
             </Tabs>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="w-full sm:max-w-[90vw] lg:max-w-7xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-white text-slate-900 border-none shadow-2xl">
-                    <DialogHeader className="p-6 border-b bg-slate-50 sticky top-0 z-10">
-                        <div className="flex items-center justify-between mr-8">
-                            <div>
-                                <DialogTitle className="text-xl flex items-center gap-3 text-slate-900 font-bold">
-                                    Review Verification Request
-                                    {selectedVerification && getStatusBadge(selectedVerification.status)}
-                                </DialogTitle>
-                                <DialogDescription className="mt-1.5 text-slate-500">
-                                    Submitted on {selectedVerification && format(new Date(selectedVerification.submitted_at), 'PPP p')}
-                                </DialogDescription>
-                            </div>
-                            <div className="text-right hidden sm:block">
-                                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Request ID</p>
-                                <code className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono border">
-                                    {selectedVerification?.id.slice(0, 8)}...
-                                </code>
-                            </div>
+                <DialogContent className="w-full sm:max-w-[95vw] lg:max-w-5xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-white text-slate-900 border-slate-200 shadow-2xl flex flex-col sm:rounded-2xl">
+                    <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50/50 sticky top-0 z-10 flex flex-row items-center justify-between">
+                        <div>
+                            <DialogTitle className="text-xl flex items-center gap-3 text-slate-900 font-bold">
+                                Review Verification
+                                {selectedVerification && getStatusBadge(selectedVerification.status)}
+                            </DialogTitle>
+                            <DialogDescription className="mt-1 text-slate-500 text-xs">
+                                Submitted on {selectedVerification && format(new Date(selectedVerification.submitted_at), 'PPP')}
+                            </DialogDescription>
                         </div>
                     </DialogHeader>
 
                     {selectedVerification && (
-                        <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-slate-50/30">
+                        <div className="p-4 sm:p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Left Column: Business & Documents (2/3 width) */}
-                            <div className="lg:col-span-2 space-y-8">
+                            <div className="lg:col-span-2 space-y-6">
                                 {/* Business Details */}
                                 <section>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="h-6 w-1 bg-blue-600 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <div className="h-4 w-1 bg-emerald-500 rounded-full"></div>
                                         Business Details
                                     </h3>
-                                    <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
-                                        <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12">
-                                            <div className="space-y-1.5">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Registered Name</span>
-                                                <p className="text-base font-semibold text-slate-900">{selectedVerification.registered_name}</p>
+                                    <Card className="bg-white border-slate-200 shadow-sm overflow-hidden rounded-xl">
+                                        <CardContent className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Registered Name</span>
+                                                <p className="text-sm font-semibold text-slate-900">{selectedVerification.registered_name}</p>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Business Type</span>
-                                                <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wide">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Business Type</span>
+                                                <div className="w-fit px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide">
                                                     {selectedVerification.business_type.replace(/_/g, ' ')}
                                                 </div>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">GST Number</span>
-                                                <p className="text-base font-mono text-slate-700 tracking-wide bg-slate-50 px-2 py-1 rounded w-fit border">{selectedVerification.gst_number || 'N/A'}</p>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">GST Number</span>
+                                                <p className="text-sm font-mono text-slate-700 bg-slate-50 px-2 py-0.5 rounded w-fit border border-slate-100">{selectedVerification.gst_number || 'N/A'}</p>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">PAN Number</span>
-                                                <p className="text-base font-mono text-slate-700 tracking-wide bg-slate-50 px-2 py-1 rounded w-fit border">{selectedVerification.pan_number || 'N/A'}</p>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">PAN Number</span>
+                                                <p className="text-sm font-mono text-slate-700 bg-slate-50 px-2 py-0.5 rounded w-fit border border-slate-100">{selectedVerification.pan_number || 'N/A'}</p>
                                             </div>
-                                            <div className="col-span-1 sm:col-span-2 space-y-1.5 pt-4 border-t border-slate-100">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Registration Number</span>
-                                                <p className="text-base font-mono text-slate-700">{selectedVerification.business_registration_no || 'N/A'}</p>
+                                            <div className="col-span-1 sm:col-span-2 space-y-1 pt-3 border-t border-slate-100">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Registration Number</span>
+                                                <p className="text-sm font-mono text-slate-700">{selectedVerification.business_registration_no || 'N/A'}</p>
                                             </div>
-                                            <div className="col-span-1 sm:col-span-2 space-y-1.5">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Business Address</span>
-                                                <p className="text-sm leading-relaxed text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                            <div className="col-span-1 sm:col-span-2 space-y-1">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Business Address</span>
+                                                <p className="text-xs leading-relaxed text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
                                                     {selectedVerification.business_address || 'No address provided'}
                                                 </p>
                                             </div>
@@ -330,11 +322,11 @@ export default function VerificationsPage() {
 
                                 {/* Documents */}
                                 <section>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="h-6 w-1 bg-indigo-600 rounded-full"></div>
-                                        Submitted Documents
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <div className="h-4 w-1 bg-amber-500 rounded-full"></div>
+                                        Documents
                                     </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {selectedVerification.documents && selectedVerification.documents.length > 0 ? (
                                             selectedVerification.documents.map((doc, index) => (
                                                 <a
@@ -342,24 +334,22 @@ export default function VerificationsPage() {
                                                     href={doc.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="group flex flex-col p-5 rounded-xl border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md transition-all duration-200"
+                                                    className="group flex items-center p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 transition-all duration-200"
                                                 >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="p-2.5 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                                            <FileText className="h-6 w-6 text-blue-600" />
-                                                        </div>
-                                                        <ExternalLink className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                                                    <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 mr-3">
+                                                        <FileText className="h-5 w-5 text-emerald-600" />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-700 text-sm mb-1 group-hover:text-blue-700 transition-colors">{doc.type.replace(/_/g, ' ').toUpperCase()}</p>
-                                                        <p className="text-xs text-slate-500 truncate">{doc.name}</p>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold text-slate-700 truncate">{doc.type.replace(/_/g, ' ').toUpperCase()}</p>
+                                                        <p className="text-[10px] text-slate-400 truncate">{doc.name}</p>
                                                     </div>
+                                                    <ExternalLink className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 ml-2" />
                                                 </a>
                                             ))
                                         ) : (
-                                            <div className="col-span-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                                                <FileText className="h-8 w-8 text-slate-300 mb-2" />
-                                                <p className="text-sm text-slate-400 font-medium">No documents uploaded for this request</p>
+                                            <div className="col-span-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/50">
+                                                <FileText className="h-6 w-6 text-slate-300 mb-2" />
+                                                <p className="text-xs text-slate-400 font-medium">No documents uploaded</p>
                                             </div>
                                         )}
                                     </div>
@@ -367,35 +357,35 @@ export default function VerificationsPage() {
                             </div>
 
                             {/* Right Column: User & Actions (1/3 width) */}
-                            <div className="space-y-8">
+                            <div className="space-y-6">
                                 {/* User Profile */}
                                 <section>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="h-6 w-1 bg-purple-600 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <div className="h-4 w-1 bg-emerald-500 rounded-full"></div>
                                         User Profile
                                     </h3>
-                                    <Card className="bg-white border-slate-200 shadow-sm">
-                                        <CardContent className="p-5 space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-lg border border-slate-200">
+                                    <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+                                        <CardContent className="p-4 space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm border border-emerald-100">
                                                     {selectedVerification.profiles?.first_name?.[0]}{selectedVerification.profiles?.last_name?.[0]}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-slate-900 text-base">
+                                                    <p className="font-bold text-slate-900 text-sm">
                                                         {selectedVerification.profiles?.first_name} {selectedVerification.profiles?.last_name}
                                                     </p>
-                                                    <p className="text-xs text-slate-500 uppercase tracking-wide mt-0.5 font-semibold">Applicant</p>
+                                                    <p className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">Applicant</p>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4 pt-4 border-t border-slate-100">
-                                                <div className="space-y-1">
-                                                    <span className="text-xs text-slate-400 uppercase font-bold">Company</span>
-                                                    <p className="text-sm text-slate-700 font-medium">{selectedVerification.profiles?.company_name}</p>
+                                            <div className="space-y-3 pt-3 border-t border-slate-100">
+                                                <div className="space-y-0.5">
+                                                    <span className="text-[10px] text-slate-400 uppercase font-bold">Company</span>
+                                                    <p className="text-xs text-slate-700 font-medium">{selectedVerification.profiles?.company_name}</p>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-xs text-slate-400 uppercase font-bold">Email Contact</span>
-                                                    <div className="flex items-center gap-2 text-sm text-slate-600 font-medium break-all bg-slate-50 p-2 rounded border border-slate-200">
+                                                <div className="space-y-0.5">
+                                                    <span className="text-[10px] text-slate-400 uppercase font-bold">Email Contact</span>
+                                                    <div className="text-[10px] text-slate-600 font-medium break-all bg-slate-50 p-2 rounded border border-slate-100">
                                                         {selectedVerification.profiles?.email}
                                                     </div>
                                                 </div>
@@ -406,50 +396,50 @@ export default function VerificationsPage() {
 
                                 {/* Admin Actions */}
                                 <section>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="h-6 w-1 bg-emerald-600 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <div className="h-4 w-1 bg-emerald-500 rounded-full"></div>
                                         Actions
                                     </h3>
-                                    <Card className={selectedVerification.status === 'pending' ? 'border-amber-200 bg-amber-50 shadow-sm' : 'bg-white border-slate-200 shadow-sm'}>
-                                        <CardContent className="p-5 space-y-5">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold uppercase text-slate-500">Internal Notes</label>
+                                    <Card className={selectedVerification.status === 'pending' ? 'border-amber-200 bg-amber-50 shadow-sm rounded-xl' : 'bg-white border-slate-200 shadow-sm rounded-xl'}>
+                                        <CardContent className="p-4 space-y-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Internal Notes</label>
                                                 <Textarea
                                                     placeholder="Add private notes..."
                                                     value={adminNotes}
                                                     onChange={(e) => setAdminNotes(e.target.value)}
-                                                    className="min-h-[80px] text-sm bg-white border-slate-300 focus:border-blue-500 resize-none"
+                                                    className="min-h-[60px] text-xs bg-white border-slate-200 focus:border-emerald-500 resize-none rounded-lg"
                                                 />
                                             </div>
 
                                             {selectedVerification.rejection_reason && (
-                                                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                                    <span className="font-bold block mb-1 text-red-800 uppercase text-xs tracking-wider">Rejection Reason</span>
+                                                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">
+                                                    <span className="font-bold block mb-1 text-red-800 uppercase text-[9px] tracking-wider">Rejection Reason</span>
                                                     {selectedVerification.rejection_reason}
                                                 </div>
                                             )}
 
                                             {showRejectInput && (
-                                                <div className="space-y-2 pt-4 border-t border-slate-200 animate-in slide-in-from-top-2 fade-in duration-200">
-                                                    <label className="text-xs font-bold uppercase text-red-600">Reason for Rejection *</label>
+                                                <div className="space-y-2 pt-3 border-t border-slate-200 animate-in slide-in-from-top-2 fade-in duration-200">
+                                                    <label className="text-[10px] font-bold uppercase text-red-600">Reason for Rejection *</label>
                                                     <Textarea
-                                                        placeholder="Please provide a reason for rejecting this request..."
+                                                        placeholder="Please provide a reason..."
                                                         value={rejectionReason}
                                                         onChange={(e) => setRejectionReason(e.target.value)}
-                                                        className="min-h-[100px] text-sm bg-red-50 border-red-200 text-red-900 placeholder:text-red-300 focus:border-red-500 focus:ring-red-100"
+                                                        className="min-h-[80px] text-xs bg-red-50 border-red-100 text-red-900 placeholder:text-red-300 focus:border-red-500 focus:ring-red-100 rounded-lg"
                                                         autoFocus
                                                     />
                                                 </div>
                                             )}
 
-                                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <div className="grid grid-cols-2 gap-2 pt-1">
                                                 {showRejectInput ? (
                                                     <>
                                                         <Button
                                                             variant="outline"
                                                             onClick={() => setShowRejectInput(false)}
                                                             disabled={actionLoading}
-                                                            className="border-slate-300 text-slate-600 hover:bg-slate-50"
+                                                            className="border-slate-200 text-slate-500 hover:bg-slate-50 text-xs h-9"
                                                         >
                                                             Cancel
                                                         </Button>
@@ -457,28 +447,28 @@ export default function VerificationsPage() {
                                                             variant="destructive"
                                                             onClick={handleReject}
                                                             disabled={actionLoading || !rejectionReason.trim()}
-                                                            className="bg-red-600 hover:bg-red-700 shadow-sm"
+                                                            className="bg-red-600 hover:bg-red-700 shadow-sm text-xs h-9"
                                                         >
-                                                            {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
+                                                            {actionLoading ? '...' : 'Reject'}
                                                         </Button>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Button
                                                             variant="outline"
-                                                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all font-semibold"
+                                                            className="border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 text-xs h-9 font-semibold"
                                                             onClick={() => setShowRejectInput(true)}
                                                             disabled={actionLoading || selectedVerification.status === 'rejected'}
                                                         >
-                                                            <XCircle className="mr-2 h-4 w-4" />
+                                                            <XCircle className="mr-1.5 h-3.5 w-3.5" />
                                                             Reject
                                                         </Button>
                                                         <Button
-                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all font-semibold"
+                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all text-xs h-9 font-semibold"
                                                             onClick={handleVerify}
                                                             disabled={actionLoading || selectedVerification.status === 'verified'}
                                                         >
-                                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                                            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
                                                             Approve
                                                         </Button>
                                                     </>

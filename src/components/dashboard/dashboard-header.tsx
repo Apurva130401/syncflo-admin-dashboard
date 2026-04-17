@@ -24,7 +24,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 via-blue-800 to-slate-900 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 via-amber-500 to-emerald-600 bg-clip-text text-transparent">
                     {greeting}, {firstName}
                 </h1>
                 <p className="text-slate-500 mt-1 text-lg">

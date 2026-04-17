@@ -21,38 +21,34 @@
 
 :root {
   /* Base Colors - Light Theme */
-  --background: #f8fafc;
-  /* Slate 50 */
-  --foreground: #0f172a;
-  /* Slate 900 */
+  --background: #fafafa;
+  /* Soft white/neutral */
+  --foreground: #09090b;
 
-  /* Primary - Electric Blue */
-  --primary: #3b82f6;
+  /* Primary - Vivid Emerald */
+  --primary: #10b981;
   --primary-foreground: #ffffff;
 
-  /* Secondary - Vivid Purple */
-  --secondary: #8b5cf6;
-  --secondary-foreground: #ffffff;
+  /* Secondary - Elegant Amber/Gold */
+  --secondary: #f59e0b;
+  --secondary-foreground: #09090b;
 
   /* Muted/Neutral */
-  --muted: #f1f5f9;
-  /* Slate 100 */
-  --muted-foreground: #64748b;
-  /* Slate 500 */
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
 
-  /* Accent - Cyan/Teal for pop */
-  --accent: #06b6d4;
+  /* Accent - Rose/Pink for subtle highlights */
+  --accent: #f43f5e;
   --accent-foreground: #ffffff;
 
-  /* Cards & Surfaces (Glassmorphism base - Light) */
-  --card: rgba(255, 255, 255, 0.7);
-  --card-foreground: #0f172a;
+  /* Cards & Surfaces (Glassmorphism base) */
+  --card: rgba(255, 255, 255, 0.8);
+  --card-foreground: #09090b;
 
   /* Borders & Inputs */
-  --border: #e2e8f0;
-  /* Slate 200 */
-  --input: #e2e8f0;
-  --ring: #3b82f6;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #10b981;
 
   /* Radius */
   --radius: 0.75rem;
@@ -76,8 +72,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
   background-attachment: fixed;
 }
 

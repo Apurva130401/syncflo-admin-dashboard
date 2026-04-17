@@ -56,10 +56,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
             if (profileData) {
                 setProfile(profileData)
-                // Role check moved here if centralized restriction is needed
-                if (profileData.role === 'user') {
-                    router.push('/')
-                }
             } else if (profileError) {
                 console.error('Error fetching profile:', profileError)
             }

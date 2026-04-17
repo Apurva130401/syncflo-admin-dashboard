@@ -35,8 +35,8 @@ export function Header() {
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url
 
   return (
-    <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Button
@@ -47,7 +47,7 @@ export function Header() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-slate-900 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-emerald-600 to-slate-900 bg-clip-text text-transparent">
               Admin Panel
             </h1>
           </div>
@@ -55,10 +55,10 @@ export function Header() {
           <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-gray-100 transition-colors duration-200">
-                  <Avatar className="h-10 w-10 ring-2 ring-gray-200 hover:ring-blue-300 transition-all duration-200">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-slate-100 transition-colors duration-200">
+                  <Avatar className="h-10 w-10 ring-2 ring-slate-200 hover:ring-emerald-300 transition-all duration-200">
                     <AvatarImage src={userAvatar} alt={displayName} />
-                    <AvatarFallback className="bg-gradient-to-b from-slate-900 to-slate-800 text-white font-semibold">
+                    <AvatarFallback className="bg-gradient-to-b from-emerald-600 to-emerald-800 text-white font-semibold">
                       {getInitials(displayName)}
                     </AvatarFallback>
                   </Avatar>
@@ -74,12 +74,12 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/dashboard/account')} className="px-4 py-3 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200 cursor-pointer">
-                  <User className="mr-3 h-4 w-4 text-blue-600" />
+                <DropdownMenuItem onClick={() => router.push('/dashboard/account')} className="px-4 py-3 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200 cursor-pointer">
+                  <User className="mr-3 h-4 w-4 text-emerald-600" />
                   <span className="font-medium">Account</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/dashboard/account')} className="px-4 py-3 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-200 cursor-pointer">
-                  <Settings className="mr-3 h-4 w-4 text-gray-600" />
+                <DropdownMenuItem onClick={() => router.push('/dashboard/account')} className="px-4 py-3 hover:bg-slate-50 hover:text-slate-700 transition-colors duration-200 cursor-pointer">
+                  <Settings className="mr-3 h-4 w-4 text-slate-600" />
                   <span className="font-medium">Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
