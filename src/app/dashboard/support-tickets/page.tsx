@@ -49,6 +49,30 @@ export default function SupportTicketsPage() {
     }
 
     fetchTickets()
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('admin_support_tickets_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'support_tickets'
+      }, (payload) => {
+        console.log('Ticket list change received:', payload)
+        if (payload.eventType === 'INSERT') {
+          setTickets(prev => [payload.new as SupportTicket, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as SupportTicket
+          setTickets(prev => prev.map(t => t.id === updated.id ? { ...t, ...updated } : t))
+        } else if (payload.eventType === 'DELETE') {
+          setTickets(prev => prev.filter(t => t.id === payload.old.id))
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
@@ -106,8 +130,8 @@ export default function SupportTicketsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-slate-900 bg-clip-text text-transparent">
+      <div className="mb-8 p-6 rounded-2xl bg-zinc-950/50 border border-white/5 backdrop-blur-sm">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-500 via-emerald-200 to-emerald-500 bg-clip-text text-transparent">
           Support Tickets
         </h1>
         <p className="text-slate-600 mt-2 text-lg">Manage customer support requests and track resolutions</p>

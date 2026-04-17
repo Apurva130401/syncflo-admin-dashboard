@@ -40,14 +40,28 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
         const channel = supabase
             .channel(`ticket_messages_${ticketId}`)
             .on('postgres_changes', {
-                event: 'INSERT',
+                event: '*',
                 schema: 'public',
                 table: 'ticket_messages',
                 filter: `ticket_id=eq.${ticketId}`
             }, (payload) => {
-                setMessages(prev => [...prev, payload.new as Message])
+                if (payload.eventType === 'INSERT') {
+                    const newMsg = payload.new as Message
+                    setMessages(prev => {
+                        const exists = prev.some(m => m.id === newMsg.id)
+                        if (exists) return prev
+                        return [...prev, newMsg]
+                    })
+                } else if (payload.eventType === 'UPDATE') {
+                    const updatedMsg = payload.new as Message
+                    setMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m))
+                } else if (payload.eventType === 'DELETE') {
+                    setMessages(prev => prev.filter(m => m.id === payload.old.id))
+                }
             })
-            .subscribe()
+            .subscribe((status) => {
+                console.log(`Realtime subscription status for ticket ${ticketId}:`, status)
+            })
 
         return () => {
             supabase.removeChannel(channel)
@@ -92,7 +106,13 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
                 return
             }
 
-            setMessages(prev => [...prev, result.message])
+            // We add it manually for instant feedback (Optimistic)
+            // The realtime listener above will ignore it because the ID will match
+            setMessages(prev => {
+                const exists = prev.some(m => m.id === result.message.id)
+                if (exists) return prev
+                return [...prev, result.message]
+            })
             setNewMessage('')
         } catch (error) {
             console.error('Error:', error)
@@ -107,11 +127,11 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
     }
 
     return (
-        <Card className="h-[700px] flex flex-col">
-            <CardHeader>
-                <CardTitle>Chat</CardTitle>
+        <Card className="h-[700px] flex flex-col border-emerald-100/20 bg-zinc-950/50 backdrop-blur-sm">
+            <CardHeader className="border-b border-white/5">
+                <CardTitle className="text-emerald-500">Chat</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col p-4">
+            <CardContent className="flex-1 flex flex-col p-4 overflow-hidden">
                 <ScrollArea className="flex-1 pr-4 mb-4">
                     <div className="space-y-4">
                         {messages.map((message) => (
@@ -120,15 +140,17 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
                                 className={`flex ${message.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.sender_type === 'admin'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-gray-200 text-gray-900'
+                                    className={`max-w-[80%] px-4 py-2 rounded-2xl ${message.sender_type === 'admin'
+                                        ? 'bg-emerald-600 text-white rounded-tr-none shadow-lg shadow-emerald-900/20'
+                                        : 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-white/5'
                                         }`}
                                 >
-                                    <p className="text-sm">{message.message}</p>
-                                    <p className="text-xs mt-1 opacity-70">
-                                        {format(new Date(message.created_at), 'MMM dd, HH:mm')}
-                                    </p>
+                                    <p className="text-sm leading-relaxed">{message.message}</p>
+                                    <div className="flex items-center justify-between gap-4 mt-1 opacity-50">
+                                        <p className="text-[10px]">
+                                            {format(new Date(message.created_at), 'HH:mm')}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
