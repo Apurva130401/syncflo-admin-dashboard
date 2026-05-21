@@ -3,8 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Phone, Mail } from 'lucide-react'
+import { Phone, Mail } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 const mockLeads = [
     { id: 1, name: 'Alice Estate', status: 'New', value: '$12k' },
@@ -15,22 +16,27 @@ const mockLeads = [
 
 export function MiniCRMWidget() {
     return (
-        <Card className="h-full shadow-sm border-slate-200">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.08, ease: 'easeOut' }}
+        >
+        <Card className="premium-card h-full">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>My Leads</CardTitle>
                     <CardDescription>Recent assignments</CardDescription>
                 </div>
                 <Link href="/dashboard/crm">
-                    <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">View All</Button>
+                    <Button variant="outline" size="sm">View All</Button>
                 </Link>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                     {mockLeads.map((lead) => (
-                        <div key={lead.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg hover:border-indigo-200 transition-colors">
+                        <div key={lead.id} className="interactive-lift flex items-center justify-between rounded-lg border border-slate-200 bg-white/80 p-4">
                             <div>
-                                <p className="text-sm font-semibold text-slate-900">{lead.name}</p>
+                                <p className="text-sm font-semibold text-slate-950">{lead.name}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="outline" className="text-[10px] h-4 px-1">{lead.status}</Badge>
                                     <span className="text-[10px] text-slate-500 font-mono">{lead.value}</span>
@@ -49,5 +55,6 @@ export function MiniCRMWidget() {
                 </div>
             </CardContent>
         </Card>
+        </motion.div>
     )
 }

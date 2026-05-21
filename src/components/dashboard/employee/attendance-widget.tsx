@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Clock, Fingerprint, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { motion } from 'framer-motion'
 
 export function AttendanceWidget() {
     const [clockedIn, setClockedIn] = useState(false)
@@ -99,17 +100,22 @@ export function AttendanceWidget() {
     }
 
     return (
-        <Card className="shadow-sm border-slate-200">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, ease: 'easeOut' }}
+        >
+        <Card className="premium-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-semibold text-slate-700">Attendance</CardTitle>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${clockedIn ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                <CardTitle className="text-lg font-semibold text-slate-950">Attendance</CardTitle>
+                <div className={`rounded-full px-2.5 py-1 text-xs font-bold ${clockedIn ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
                     {clockedIn ? 'PRESENT' : 'AWAY'}
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center space-y-6 py-6">
                 <div className="text-center">
-                    <p className="text-sm text-slate-500 mb-1">Current Session</p>
-                    <div className="text-4xl font-mono font-bold text-slate-900 tracking-wider">
+                    <p className="mb-1 text-sm font-semibold text-slate-500">Current Session</p>
+                    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-4xl font-bold tracking-normal text-slate-950 shadow-inner">
                         {duration}
                     </div>
                 </div>
@@ -117,9 +123,9 @@ export function AttendanceWidget() {
                 <Button
                     size="lg"
                     disabled={loading}
-                    className={`w-full h-14 text-lg shadow-md transition-all ${clockedIn
-                        ? 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                    className={`h-14 w-full text-lg shadow-md transition-all ${clockedIn
+                        ? 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                        : 'bg-emerald-700 text-white shadow-emerald-500/20 hover:bg-emerald-800'
                         }`}
                     onClick={handleClock}
                 >
@@ -137,11 +143,12 @@ export function AttendanceWidget() {
                 </Button>
 
                 {startTime && (
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs font-medium text-slate-400">
                         Started at {format(startTime, 'h:mm a')}
                     </p>
                 )}
             </CardContent>
         </Card>
+        </motion.div>
     )
 }

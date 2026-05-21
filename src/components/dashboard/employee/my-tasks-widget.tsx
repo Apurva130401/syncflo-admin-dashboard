@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
 
 const initialTasks = [
     { id: 1, text: 'Call Alice about contract', done: false, tag: 'Urgent' },
@@ -21,7 +22,12 @@ export function MyTasksWidget() {
     }
 
     return (
-        <Card className="h-full shadow-sm border-slate-200">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.04, ease: 'easeOut' }}
+        >
+        <Card className="premium-card h-full">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>My Tasks</CardTitle>
@@ -34,7 +40,7 @@ export function MyTasksWidget() {
             <CardContent>
                 <div className="space-y-3">
                     {tasks.map((task) => (
-                        <div key={task.id} className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded transition-colors group">
+                        <div key={task.id} className="group flex items-start gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-slate-200 hover:bg-white">
                             <Checkbox id={`task-${task.id}`} checked={task.done} onCheckedChange={() => toggleTask(task.id)} />
                             <div className="flex-1">
                                 <label
@@ -43,12 +49,13 @@ export function MyTasksWidget() {
                                 >
                                     {task.text}
                                 </label>
-                                <p className="text-[10px] text-slate-400 mt-1">{task.tag}</p>
+                                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{task.tag}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             </CardContent>
         </Card>
+        </motion.div>
     )
 }

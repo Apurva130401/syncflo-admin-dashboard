@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
     Table,
@@ -56,11 +56,7 @@ export default function InquiriesPage() {
     const supabase = createClient()
     const { toast } = useToast()
 
-    useEffect(() => {
-        fetchSubmissions()
-    }, [])
-
-    const fetchSubmissions = async () => {
+    const fetchSubmissions = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('contact_submissions')
@@ -80,9 +76,13 @@ export default function InquiriesPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [supabase, toast])
 
-    const updateStatus = async (id: string, newStatus: string) => {
+    useEffect(() => {
+        fetchSubmissions()
+    }, [fetchSubmissions])
+
+    const updateStatus = async (id: string, newStatus: ContactSubmission['status']) => {
         try {
             const { error } = await supabase
                 .from('contact_submissions')
@@ -92,7 +92,7 @@ export default function InquiriesPage() {
             if (error) throw error
 
             setSubmissions(submissions.map(sub =>
-                sub.id === id ? { ...sub, status: newStatus as any } : sub
+                sub.id === id ? { ...sub, status: newStatus } : sub
             ))
 
             toast({
@@ -176,7 +176,7 @@ export default function InquiriesPage() {
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900">Inquiries</h1>
             </div>
 
-            <Card className="border-slate-200 bg-white/50 backdrop-blur-sm">
+            <Card className="premium-card">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-primary" />
@@ -184,7 +184,7 @@ export default function InquiriesPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -207,7 +207,7 @@ export default function InquiriesPage() {
                                     </TableRow>
                                 ) : (
                                     submissions.map((submission) => (
-                                        <TableRow key={submission.id} className="hover:bg-transparent">
+                                        <TableRow key={submission.id}>
                                             <TableCell className="whitespace-nowrap">
                                                 {format(new Date(submission.created_at), 'MMM d, yyyy')}
                                             </TableCell>
@@ -228,7 +228,7 @@ export default function InquiriesPage() {
                                             <TableCell>
                                                 <Select
                                                     defaultValue={submission.status}
-                                                    onValueChange={(value) => updateStatus(submission.id, value)}
+                                                    onValueChange={(value) => updateStatus(submission.id, value as ContactSubmission['status'])}
                                                 >
                                                     <SelectTrigger className="w-[130px]">
                                                         <SelectValue>

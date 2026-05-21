@@ -20,49 +20,29 @@
 }
 
 :root {
-  /* Base Colors - Light Theme */
-  --background: #fafafa;
-  /* Soft white/neutral */
-  --foreground: #09090b;
+  --background: #f7f8fb;
+  --foreground: #111827;
 
-  /* Primary - Vivid Emerald */
-  --primary: #10b981;
+  --primary: #047857;
   --primary-foreground: #ffffff;
 
-  /* Secondary - Elegant Amber/Gold */
-  --secondary: #f59e0b;
-  --secondary-foreground: #09090b;
+  --secondary: #e0f2fe;
+  --secondary-foreground: #0f172a;
 
-  /* Muted/Neutral */
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  --muted: #eef2f7;
+  --muted-foreground: #64748b;
 
-  /* Accent - Rose/Pink for subtle highlights */
-  --accent: #f43f5e;
-  --accent-foreground: #ffffff;
+  --accent: #dbeafe;
+  --accent-foreground: #1e3a8a;
 
-  /* Cards & Surfaces (Glassmorphism base) */
-  --card: rgba(255, 255, 255, 0.8);
-  --card-foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #111827;
 
-  /* Borders & Inputs */
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #10b981;
+  --border: #dfe7ef;
+  --input: #dfe7ef;
+  --ring: #059669;
 
-  /* Radius */
-  --radius: 0.75rem;
-}
-
-/* Light Mode Overrides (Optional, but keeping for completeness if needed later) */
-@media (prefers-color-scheme: light) {
-  /* Keeping dark mode as default for "Premium SaaS" look as requested, 
-     but defining light variables just in case user switches system preference 
-     and we want to support it, or we can force dark mode in layout. 
-     For now, let's force dark mode feel even in light scheme or map them to light equivalents.
-     Actually, let's stick to the dark theme as the primary design. 
-     If we want true light mode, we'd invert these. 
-     For this task, I will enforce the dark theme look by default. */
+  --radius: 0.5rem;
 }
 
 body {
@@ -72,27 +52,90 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image:
-    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(247, 248, 251, 0.82) 34%, rgba(247, 248, 251, 1) 100%),
+    radial-gradient(circle at 14% 0%, rgba(5, 150, 105, 0.09) 0, transparent 28rem),
+    radial-gradient(circle at 78% 6%, rgba(37, 99, 235, 0.08) 0, transparent 26rem);
   background-attachment: fixed;
 }
 
-/* Glassmorphism Utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(226, 232, 240, 0.78);
+  box-shadow: 0 18px 48px -32px rgba(15, 23, 42, 0.35);
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(148, 163, 184, 0.34);
+  box-shadow: 0 22px 58px -34px rgba(15, 23, 42, 0.42);
 }
 
-/* Custom Scrollbar */
+.premium-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88)),
+    radial-gradient(circle at 100% 0%, rgba(5, 150, 105, 0.08), transparent 18rem);
+  box-shadow: 0 18px 52px -36px rgba(15, 23, 42, 0.36);
+}
+
+.premium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.interactive-lift {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+}
+
+.interactive-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgba(5, 150, 105, 0.22);
+  box-shadow: 0 24px 62px -38px rgba(15, 23, 42, 0.46);
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
+}
+
+@keyframes soft-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-soft-in {
+  animation: soft-in 480ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -103,10 +146,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--muted);
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: #94a3b8;
 }

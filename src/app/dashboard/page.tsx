@@ -79,7 +79,13 @@ export default function AdminDashboard() {
   // Show a full page loader ONLY if the user context is initializing
   // Once we know who the user is, we show the dashboard shell immediately
   if (userLoading) {
-    return <div className="flex h-[50vh] items-center justify-center text-slate-500">Loading...</div>
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm font-semibold text-slate-500 shadow-sm">
+          Preparing your workspace...
+        </div>
+      </div>
+    )
   }
 
   const role = profile?.role || 'user'
@@ -91,7 +97,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5">
       {/* Header */}
       <DashboardHeader user={user} />
 
@@ -99,19 +105,19 @@ export default function AdminDashboard() {
       <StatsCards stats={stats} loading={statsLoading} />
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-7">
 
         {/* Left Column (Operational Widgets) */}
-        <div className="lg:col-span-5 space-y-8">
+        <div className="space-y-5 xl:col-span-5">
           {role !== 'admin' && <AttendanceWidget />}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <PipelineChart />
             <RecentPayroll />
           </div>
         </div>
 
         {/* Right Column (Actions) */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="space-y-5 xl:col-span-2">
           <QuickActions />
         </div>
       </div>

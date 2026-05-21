@@ -147,7 +147,7 @@ export default function SupportTicketsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="premium-card">
         <CardHeader>
           <CardTitle>All Tickets ({tickets.length})</CardTitle>
           <CardDescription>

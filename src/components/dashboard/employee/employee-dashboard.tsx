@@ -12,22 +12,20 @@ interface EmployeeDashboardProps {
 
 export function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-5">
             <DashboardHeader user={user} />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Left Column: Attendance & Tasks */}
-                <div className="space-y-8">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+                <div className="space-y-5">
                     <AttendanceWidget />
                     <MyTasksWidget />
                 </div>
 
-                {/* Center/Right: CRM spans 2 cols */}
-                <div className="md:col-span-2">
+                <div className="xl:col-span-2">
                     <MiniCRMWidget />
-                    {/* Placeholder for Calendar or other widgets */}
-                    <div className="mt-8 p-6 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
-                        <p>Team Calendar & Announcements coming soon</p>
+                    <div className="premium-card mt-5 rounded-lg p-5 text-center">
+                        <p className="text-sm font-bold text-slate-700">Team Calendar & Announcements</p>
+                        <p className="mt-1 text-xs text-slate-500">Upcoming shifts, launches, and handoffs will live here.</p>
                     </div>
                 </div>
             </div>

@@ -21,8 +21,7 @@ import {
     XCircle,
     FileText,
     ExternalLink,
-    Search,
-    ShieldCheck
+    Search
 } from 'lucide-react'
 
 interface Document {
@@ -179,6 +178,16 @@ export default function VerificationsPage() {
     const verifiedCount = verifications.filter(v => v.status === 'verified').length
     const rejectedCount = verifications.filter(v => v.status === 'rejected').length
 
+    if (loading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm font-semibold text-slate-500 shadow-sm">
+                    Loading verification queue...
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <div className="mb-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -209,11 +218,11 @@ export default function VerificationsPage() {
 
                 {['all', 'pending', 'verified', 'rejected'].map((tab) => (
                     <TabsContent key={tab} value={tab}>
-                        <Card className="border shadow-sm">
+                        <Card className="premium-card">
                             <CardContent className="p-0">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                        <TableRow>
                                             <TableHead>Company Name</TableHead>
                                             <TableHead>Registered Name</TableHead>
                                             <TableHead>Business Type</TableHead>

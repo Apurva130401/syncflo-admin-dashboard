@@ -101,7 +101,7 @@ export default function SubscriptionsPage() {
                 <p className="text-slate-600 mt-2 text-lg">Monitor all user subscriptions and their status</p>
             </div>
 
-            <Card>
+            <Card className="premium-card">
                 <CardHeader>
                     <CardTitle>All Subscriptions ({filteredSubscriptions.length})</CardTitle>
                     <CardDescription>
