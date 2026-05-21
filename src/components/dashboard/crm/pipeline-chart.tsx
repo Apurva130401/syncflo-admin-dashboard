@@ -7,6 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 
 const COLORS = ['#94a3b8', '#60a5fa', '#3b82f6', '#2563eb', '#16a34a']
 
+type LeadSummary = {
+    status: string | null
+    value: number | string | null
+}
+
 export function PipelineChart() {
     const [data, setData] = useState<{ name: string; value: number; totalValue: number }[]>([])
     const [loading, setLoading] = useState(true)
@@ -17,11 +22,14 @@ export function PipelineChart() {
             const { data: leads } = await supabase.from('admin_leads').select('status, value')
 
             if (leads) {
+                const leadRows = leads as LeadSummary[]
                 const stages = ['New', 'Contacted', 'Proposal', 'Negotiation', 'Closed']
                 const grouped = stages.map(stage => ({
                     name: stage,
-                    value: leads.filter((l: any) => l.status === stage).length,
-                    totalValue: leads.filter((l: any) => l.status === stage).reduce((acc, curr: any) => acc + (Number(curr.value) || 0), 0)
+                    value: leadRows.filter((lead) => lead.status === stage).length,
+                    totalValue: leadRows
+                        .filter((lead) => lead.status === stage)
+                        .reduce((acc: number, curr) => acc + (Number(curr.value) || 0), 0)
                 }))
                 setData(grouped)
             }

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import TicketChat from '@/components/dashboard/ticket-chat'
 
@@ -22,6 +23,8 @@ interface SupportTicket {
   updated_at: string
   user_email?: string
 }
+
+type TicketRealtimePayload = RealtimePostgresChangesPayload<SupportTicket>
 
 export default function SupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
@@ -57,7 +60,7 @@ export default function SupportTicketsPage() {
         event: '*',
         schema: 'public',
         table: 'support_tickets'
-      }, (payload) => {
+      }, (payload: TicketRealtimePayload) => {
         console.log('Ticket list change received:', payload)
         if (payload.eventType === 'INSERT') {
           setTickets(prev => [payload.new as SupportTicket, ...prev])

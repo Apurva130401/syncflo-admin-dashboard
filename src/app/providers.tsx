@@ -1,17 +1,17 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, usePathname } from 'next/navigation'
+import type { AuthChangeEvent } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 import { AppShellProvider } from '@/components/layout/app-shell-context'
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
       if (event === 'SIGNED_OUT') {
         router.push('/login')
       }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -16,10 +16,16 @@ interface Activity {
   user_email?: string
 }
 
+type ProfileActivityRow = {
+  id: string
+  email: string | null
+  updated_at: string
+}
+
 export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -35,13 +41,13 @@ export default function ActivityPage() {
         if (error) {
           console.error('Error fetching activities:', error)
         } else {
-          const activityData = (data || []).map(user => ({
+          const activityData = ((data || []) as ProfileActivityRow[]).map((user) => ({
             id: `activity-${user.id}`,
             user_id: user.id,
             action: 'Profile Updated',
             details: 'User profile was modified',
             created_at: user.updated_at,
-            user_email: user.email
+            user_email: user.email ?? 'Unknown User'
           }))
           setActivities(activityData)
         }

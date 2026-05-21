@@ -1,8 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
 type Profile = {
@@ -15,7 +15,7 @@ type Profile = {
     personal_phone?: string
     avatar_url?: string
     employee_id?: string
-    [key: string]: any
+    [key: string]: unknown
 }
 
 type UserContextType = {
@@ -31,46 +31,51 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [profile, setProfile] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(true)
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
     const router = useRouter()
 
-    const fetchUserData = async () => {
-        try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const fetchProfile = useCallback(async (userId: string) => {
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
 
-            if (userError || !user) {
-                // Determine if we are on a public route or need redirect
-                // For now, just set loading false and let protected routes handle redirect if needed
+        if (profileData) {
+            setProfile(profileData)
+        } else {
+            setProfile(null)
+            if (profileError) {
+                console.error('Error fetching profile:', profileError)
+            }
+        }
+    }, [supabase])
+
+    const fetchUserData = useCallback(async () => {
+        try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            const sessionUser = session?.user ?? null
+
+            if (sessionError || !sessionUser) {
                 setUser(null)
                 setProfile(null)
                 return
             }
 
-            setUser(user)
-
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single()
-
-            if (profileData) {
-                setProfile(profileData)
-            } else if (profileError) {
-                console.error('Error fetching profile:', profileError)
-            }
+            setUser(sessionUser)
+            await fetchProfile(sessionUser.id)
 
         } catch (error) {
             console.error('Unexpected error in UserProvider:', error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [fetchProfile, supabase])
 
     useEffect(() => {
         fetchUserData()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             if (event === 'SIGNED_OUT') {
                 setUser(null)
                 setProfile(null)
@@ -78,13 +83,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if (session?.user) {
                     setUser(session.user)
-                    // Optionally re-fetch profile on sign-in if needed
-                    const { data } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single()
-                    if (data) setProfile(data)
+                    await fetchProfile(session.user.id)
                 }
             }
         })
@@ -92,23 +91,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         return () => {
             subscription.unsubscribe()
         }
-    }, [router, supabase])
+    }, [fetchProfile, fetchUserData, router, supabase])
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (!user) return
-        const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single()
+        await fetchProfile(user.id)
+    }, [fetchProfile, user])
 
-        if (profileData) {
-            setProfile(profileData)
-        }
-    }
+    const value = useMemo(
+        () => ({ user, profile, loading, refreshProfile }),
+        [user, profile, loading, refreshProfile]
+    )
 
     return (
-        <UserContext.Provider value={{ user, profile, loading, refreshProfile }}>
+        <UserContext.Provider value={value}>
             {children}
         </UserContext.Provider>
     )

@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { Send, Paperclip } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 interface Message {
     id: string
@@ -24,6 +24,8 @@ interface TicketChatProps {
     ticketId: string
 }
 
+type MessageRealtimePayload = RealtimePostgresChangesPayload<Message>
+
 export default function TicketChat({ ticketId }: TicketChatProps) {
     const [messages, setMessages] = useState<Message[]>([])
     const [newMessage, setNewMessage] = useState('')
@@ -37,45 +39,7 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
         }
     }, [messages])
 
-    useEffect(() => {
-        fetchMessages()
-    }, [ticketId])
-
-    useEffect(() => {
-        const supabase = createClient()
-
-        const channel = supabase
-            .channel(`ticket_messages_${ticketId}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'ticket_messages',
-                filter: `ticket_id=eq.${ticketId}`
-            }, (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    const newMsg = payload.new as Message
-                    setMessages(prev => {
-                        const exists = prev.some(m => m.id === newMsg.id)
-                        if (exists) return prev
-                        return [...prev, newMsg]
-                    })
-                } else if (payload.eventType === 'UPDATE') {
-                    const updatedMsg = payload.new as Message
-                    setMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m))
-                } else if (payload.eventType === 'DELETE') {
-                    setMessages(prev => prev.filter(m => m.id === payload.old.id))
-                }
-            })
-            .subscribe((status) => {
-                console.log(`Realtime subscription status for ticket ${ticketId}:`, status)
-            })
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [ticketId])
-
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         try {
             const response = await fetch(`/api/admin/support-tickets/${ticketId}/messages`)
             const result = await response.json()
@@ -91,7 +55,45 @@ export default function TicketChat({ ticketId }: TicketChatProps) {
         } finally {
             setLoading(false)
         }
-    }
+    }, [ticketId])
+
+    useEffect(() => {
+        fetchMessages()
+    }, [fetchMessages])
+
+    useEffect(() => {
+        const supabase = createClient()
+
+        const channel = supabase
+            .channel(`ticket_messages_${ticketId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'ticket_messages',
+                filter: `ticket_id=eq.${ticketId}`
+            }, (payload: MessageRealtimePayload) => {
+                if (payload.eventType === 'INSERT') {
+                    const newMsg = payload.new as Message
+                    setMessages(prev => {
+                        const exists = prev.some(m => m.id === newMsg.id)
+                        if (exists) return prev
+                        return [...prev, newMsg]
+                    })
+                } else if (payload.eventType === 'UPDATE') {
+                    const updatedMsg = payload.new as Message
+                    setMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m))
+                } else if (payload.eventType === 'DELETE') {
+                    setMessages(prev => prev.filter(m => m.id === payload.old.id))
+                }
+            })
+            .subscribe((status: string) => {
+                console.log(`Realtime subscription status for ticket ${ticketId}:`, status)
+            })
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [ticketId])
 
     const sendMessage = async () => {
         if (!newMessage.trim()) return

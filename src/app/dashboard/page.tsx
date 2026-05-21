@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { QuickActions } from '@/components/dashboard/quick-actions'
@@ -11,9 +10,39 @@ import { RecentPayroll } from '@/components/dashboard/payroll/recent-payroll'
 import { EmployeeDashboard } from '@/components/dashboard/employee/employee-dashboard'
 import { useUser } from '@/providers/user-provider'
 
+type DashboardStats = {
+  totalUsers: number
+  activeUsers: number
+  openTickets: number
+  pendingVerifications: number
+}
+
+async function fetchDashboardJson<T>(url: string, fallback: T): Promise<T> {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), 8000)
+
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      throw new Error(`${url} returned ${response.status}`)
+    }
+
+    return await response.json() as T
+  } catch (error) {
+    console.error(`Dashboard request failed for ${url}:`, error)
+    return fallback
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
+}
+
 export default function AdminDashboard() {
   const { user, profile, loading: userLoading } = useUser()
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     activeUsers: 0,
     openTickets: 0,
@@ -26,42 +55,14 @@ export default function AdminDashboard() {
       try {
         setStatsLoading(true)
 
-        // Fetch all stats in parallel //
-        const [usersRes, verificationsRes, ticketsRes] = await Promise.all([
-          fetch('/api/admin/users'),
-          fetch('/api/admin/verifications'),
-          fetch('/api/admin/support-tickets')
-        ])
-
-        const [usersResult, verificationsResult, ticketsResult] = await Promise.all([
-          usersRes.json(),
-          verificationsRes.json(),
-          ticketsRes.json()
-        ])
-
-        const totalUsers = usersResult.users?.length || 0
-
-        // Active users logic
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        const activeUsers = usersResult.users?.filter((u: any) =>
-          new Date(u.updated_at) > thirtyDaysAgo
-        ).length || 0
-
-        const pendingVerifications = verificationsResult.verifications?.filter(
-          (v: any) => v.status === 'pending'
-        ).length || 0
-
-        const openTickets = ticketsResult.tickets?.filter(
-          (t: any) => t.status === 'open'
-        ).length || 0
-
-        setStats({
-          totalUsers,
-          activeUsers,
-          openTickets,
-          pendingVerifications
+        const nextStats = await fetchDashboardJson<DashboardStats>('/api/admin/dashboard-stats', {
+          totalUsers: 0,
+          activeUsers: 0,
+          openTickets: 0,
+          pendingVerifications: 0,
         })
+
+        setStats(nextStats)
 
       } catch (error) {
         console.error('Error fetching dashboard stats:', error)
@@ -70,12 +71,10 @@ export default function AdminDashboard() {
       }
     }
 
-    // Only fetch stats if user is admin/manager (optimization)
-    // For now, fetching for everyone except if we want to be strict
-    if (user) {
+    if (user && profile?.role && profile.role !== 'employee') {
       fetchStats()
     }
-  }, [user])
+  }, [profile?.role, user])
 
   // Show a full page loader ONLY if the user context is initializing
   // Once we know who the user is, we show the dashboard shell immediately
