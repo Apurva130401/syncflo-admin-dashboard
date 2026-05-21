@@ -1,15 +1,15 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Shield, Phone, Mail, Building, Camera, PenLine, Upload, X, Check } from 'lucide-react'
+import { Shield, Phone, Mail, PenLine } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Image from 'next/image'
 import Cropper from 'react-easy-crop'
+import type { Area } from 'react-easy-crop'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import QRCode from 'react-qr-code'
@@ -19,8 +19,10 @@ import { useUser } from '@/providers/user-provider'
 export default function SettingsPage() {
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
     const { user, profile: userProfile, loading, refreshProfile } = useUser()
+    const employeeIdSyncRef = useRef<string | null>(null)
+    const generatedEmployeeIdRef = useRef<string | null>(null)
 
     const [profile, setProfile] = useState({
         first_name: '',
@@ -37,12 +39,41 @@ export default function SettingsPage() {
     const [cropImage, setCropImage] = useState<string | null>(null)
     const [crop, setCrop] = useState({ x: 0, y: 0 })
     const [zoom, setZoom] = useState(1)
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
     const [isCropping, setIsCropping] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const generateEmployeeId = () => {
+        return 'SF-' + Math.floor(1000 + Math.random() * 9000)
+    }
+
+    const saveMissingEmployeeId = useCallback(async (employeeId: string) => {
+        if (!user?.id || employeeIdSyncRef.current === employeeId) return
+
+        employeeIdSyncRef.current = employeeId
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ employee_id: employeeId })
+            .eq('id', user.id)
+
+        if (error) {
+            console.error('Error saving generated employee ID:', error)
+            employeeIdSyncRef.current = null
+            return
+        }
+
+        generatedEmployeeIdRef.current = null
+        refreshProfile()
+    }, [refreshProfile, supabase, user?.id])
+
     useEffect(() => {
         if (user && userProfile) {
+            const employeeId = userProfile.employee_id || generatedEmployeeIdRef.current || generateEmployeeId()
+            if (!userProfile.employee_id) {
+                generatedEmployeeIdRef.current = employeeId
+            }
+
             setProfile({
                 first_name: userProfile.first_name || '',
                 last_name: userProfile.last_name || '',
@@ -50,15 +81,15 @@ export default function SettingsPage() {
                 company_name: userProfile.company_name || 'SyncFlo Inc.',
                 personal_phone: userProfile.personal_phone || '',
                 avatar_url: userProfile.avatar_url || '',
-                employee_id: userProfile.employee_id || generateEmployeeId(),
+                employee_id: employeeId,
                 created_at: user.created_at || new Date().toISOString()
             })
-        }
-    }, [user, userProfile])
 
-    const generateEmployeeId = () => {
-        return 'SF-' + Math.floor(1000 + Math.random() * 9000)
-    }
+            if (!userProfile.employee_id) {
+                saveMissingEmployeeId(employeeId)
+            }
+        }
+    }, [saveMissingEmployeeId, user, userProfile])
 
     const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -72,7 +103,7 @@ export default function SettingsPage() {
         }
     }
 
-    const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    const onCropComplete = (_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels)
     }
 
@@ -85,7 +116,7 @@ export default function SettingsPage() {
             image.src = url
         })
 
-    const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
+    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<Blob> => {
         const image = await createImage(imageSrc)
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
