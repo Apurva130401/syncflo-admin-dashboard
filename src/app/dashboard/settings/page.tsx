@@ -217,7 +217,8 @@ export default function SettingsPage() {
     }
 
     // Generate QR Code Data (Verification Link)
-    const qrData = `https://admin.syncflo.xyz/verify/${profile.employee_id}`
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.syncflo.xyz'
+    const qrData = `${baseUrl.replace(/\/$/, '')}/verify/${encodeURIComponent(profile.employee_id)}`
 
     if (loading) {
         return (

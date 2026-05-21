@@ -1,17 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Image from 'next/image'
 import { CheckCircle2, XCircle, ShieldCheck } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function VerifyPage({ params }: { params: Promise<{ id: string }> }) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { id } = await params
 
     // Fetch profile by employee_id
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('avatar_url, first_name, last_name, company_name, employee_id, email, created_at')
         .eq('employee_id', id)
         .single()
 
