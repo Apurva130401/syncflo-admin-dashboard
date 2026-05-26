@@ -26,6 +26,21 @@ type UserContextType = {
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
+const AUTH_REQUEST_TIMEOUT_MS = 8000
+
+function withTimeout<T>(promise: PromiseLike<T>, message: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+            reject(new Error(message))
+        }, AUTH_REQUEST_TIMEOUT_MS)
+
+        Promise.resolve(promise)
+            .then(resolve, reject)
+            .finally(() => {
+                window.clearTimeout(timeoutId)
+            })
+    })
+}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
@@ -35,25 +50,42 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter()
 
     const fetchProfile = useCallback(async (userId: string) => {
-        const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single()
+        try {
+            const profileRequest = supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single()
+            type ProfileResponse = Awaited<typeof profileRequest>
 
-        if (profileData) {
-            setProfile(profileData)
-        } else {
-            setProfile(null)
-            if (profileError) {
-                console.error('Error fetching profile:', profileError)
+            const { data: profileData, error: profileError } = await withTimeout(
+                profileRequest as PromiseLike<ProfileResponse>,
+                'Timed out while loading profile'
+            )
+
+            if (profileData) {
+                setProfile(profileData)
+            } else {
+                setProfile(null)
+                if (profileError) {
+                    console.error('Error fetching profile:', profileError)
+                }
             }
+        } catch (error) {
+            setProfile(null)
+            console.error('Error fetching profile:', error)
         }
     }, [supabase])
 
     const fetchUserData = useCallback(async () => {
         try {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            const sessionRequest = supabase.auth.getSession()
+            type SessionResponse = Awaited<typeof sessionRequest>
+
+            const { data: { session }, error: sessionError } = await withTimeout(
+                sessionRequest as PromiseLike<SessionResponse>,
+                'Timed out while loading auth session'
+            )
             const sessionUser = session?.user ?? null
 
             if (sessionError || !sessionUser) {
@@ -75,15 +107,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         fetchUserData()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
             if (event === 'SIGNED_OUT') {
                 setUser(null)
                 setProfile(null)
+                setLoading(false)
                 router.push('/login')
-            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                 if (session?.user) {
                     setUser(session.user)
-                    await fetchProfile(session.user.id)
+                    window.setTimeout(() => {
+                        void fetchProfile(session.user.id)
+                    }, 0)
+                } else if (event === 'INITIAL_SESSION') {
+                    setUser(null)
+                    setProfile(null)
+                    setLoading(false)
                 }
             }
         })
