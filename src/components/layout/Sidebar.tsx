@@ -18,6 +18,7 @@ import {
     Activity,
     HelpCircle,
     MessageSquare,
+    Inbox,
     ShieldCheck,
     Target,
     ClipboardList,
@@ -45,6 +46,7 @@ const allItems = [
     { icon: Clock, label: 'Attendance', href: '/dashboard/admin/attendance', roles: ['admin', 'manager'] },
     { icon: HelpCircle, label: 'Support Tickets', href: '/dashboard/support-tickets', roles: ['admin', 'manager', 'support'] },
     { icon: MessageSquare, label: 'Inquiries', href: '/dashboard/inquiries', roles: ['admin', 'manager', 'support'] },
+    { icon: Inbox, label: 'Custom Enquiries', href: '/dashboard/custom-enquiries', roles: ['admin', 'manager', 'support'] },
 
     // Finance
     { icon: FileText, label: 'Invoices', href: '/dashboard/invoices', roles: ['admin', 'accountant'] },
@@ -61,7 +63,7 @@ const allItems = [
 const navGroups = [
     { label: 'Command', items: ['Dashboard', 'CRM', 'My Tasks'] },
     { label: 'People', items: ['All Users', 'User Activity', 'Attendance'] },
-    { label: 'Operations', items: ['Verifications', 'Support Tickets', 'Inquiries'] },
+    { label: 'Operations', items: ['Verifications', 'Support Tickets', 'Inquiries', 'Custom Enquiries'] },
     { label: 'Finance', items: ['Invoices', 'Payroll', 'Revenue', 'Subscriptions'] },
     { label: 'System', items: ['System Monitoring', 'API & Logs', 'Settings'] },
 ]
