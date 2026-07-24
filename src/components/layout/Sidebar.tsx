@@ -24,7 +24,8 @@ import {
     ClipboardList,
     DollarSign,
     Code,
-    Clock
+    Clock,
+    Megaphone
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppShell } from './app-shell-context'
@@ -33,9 +34,10 @@ import { useAppShell } from './app-shell-context'
 const allItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['all'] },
 
-    // Growth / Employee
+    // Growth / Marketing
     { icon: Target, label: 'CRM', href: '/dashboard/crm', roles: ['employee', 'admin', 'manager'] },
     { icon: ClipboardList, label: 'My Tasks', href: '/dashboard/tasks', roles: ['employee', 'admin', 'manager'] },
+    { icon: Megaphone, label: 'Marketing Email', href: '/dashboard/marketing-email', roles: ['admin', 'manager', 'employee'] },
 
     // Admin / Manager Stats
     { icon: Users, label: 'All Users', href: '/dashboard/users', roles: ['admin', 'manager', 'support'] },
@@ -61,13 +63,12 @@ const allItems = [
 ]
 
 const navGroups = [
-    { label: 'Command', items: ['Dashboard', 'CRM', 'My Tasks'] },
+    { label: 'Command', items: ['Dashboard', 'CRM', 'My Tasks', 'Marketing Email'] },
     { label: 'People', items: ['All Users', 'User Activity', 'Attendance'] },
     { label: 'Operations', items: ['Verifications', 'Support Tickets', 'Inquiries', 'Custom Enquiries'] },
     { label: 'Finance', items: ['Invoices', 'Payroll', 'Revenue', 'Subscriptions'] },
     { label: 'System', items: ['System Monitoring', 'API & Logs', 'Settings'] },
 ]
-
 import { useUser } from '@/providers/user-provider'
 
 export function Sidebar() {
