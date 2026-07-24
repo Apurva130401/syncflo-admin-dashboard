@@ -25,10 +25,12 @@ import {
     UserPlus,
     Copy,
     Check,
-    AlertCircle,
-    Info,
     RefreshCw,
-    Loader2
+    Loader2,
+    UserCheck,
+    UserX,
+    ExternalLink,
+    AlertTriangle
 } from 'lucide-react'
 
 interface UserProfile {
@@ -38,6 +40,9 @@ interface UserProfile {
     last_name?: string
     role?: string
     created_at?: string
+    opt_in?: boolean
+    unsubscribed?: boolean
+    email_subscribed?: boolean
 }
 
 interface Recipient {
@@ -46,6 +51,7 @@ interface Recipient {
     last_name?: string
     id?: string
     source?: 'database' | 'custom'
+    opt_in: boolean
 }
 
 const DYNAMIC_VARIABLES = [
@@ -54,6 +60,7 @@ const DYNAMIC_VARIABLES = [
     { tag: '{{name}}', label: 'Full Name', example: 'Apurva Sharma', description: "Full name (falls back to 'Valued User')" },
     { tag: '{{email}}', label: 'Email', example: 'user@example.com', description: "Recipient's email address" },
     { tag: '{{date}}', label: 'Current Date', example: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), description: "Today's date" },
+    { tag: '{{unsubscribe_url}}', label: 'Unsubscribe URL', example: 'https://updates.syncflo.xyz/unsubscribe?email=user@example.com', description: "Personalized unsubscribe link URL" },
 ]
 
 const DEFAULT_TEMPLATES = [
@@ -74,6 +81,7 @@ const DEFAULT_TEMPLATES = [
     .content h2 { color: #0f172a; margin-top: 0; font-size: 20px; }
     .btn { display: inline-block; background: #2563eb; color: #ffffff !important; font-weight: 600; padding: 14px 32px; border-radius: 8px; text-decoration: none; margin-top: 24px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
     .footer { background: #f8fafc; padding: 24px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; }
+    .footer a { color: #64748b; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -100,6 +108,7 @@ const DEFAULT_TEMPLATES = [
     <div class="footer">
       <p>Sent to {{email}} via SyncFlo AI Admin.</p>
       <p>&copy; {{date}} SyncFlo AI. All rights reserved.</p>
+      <p style="margin-top: 8px;"><a href="{{unsubscribe_url}}">Unsubscribe from marketing emails</a></p>
     </div>
   </div>
 </body>
@@ -115,6 +124,7 @@ const DEFAULT_TEMPLATES = [
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2937; padding: 20px; background-color: #ffffff; }
     .wrapper { max-width: 580px; margin: 0 auto; }
     .btn { display: inline-block; background: #0f172a; color: #ffffff !important; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; margin-top: 15px; }
+    .unsub { font-size: 12px; color: #9ca3af; margin-top: 30px; border-top: 1px solid #f3f4f6; padding-top: 15px; }
   </style>
 </head>
 <body>
@@ -126,6 +136,9 @@ const DEFAULT_TEMPLATES = [
     <p><a href="https://dashboard.syncflo.xyz" class="btn">Go to Dashboard</a></p>
     <br>
     <p>Best,<br><strong>Apurva</strong><br>SyncFlo AI</p>
+    <div class="unsub">
+      If you no longer wish to receive these updates, you can <a href="{{unsubscribe_url}}" style="color: #6b7280; text-decoration: underline;">unsubscribe here</a>.
+    </div>
   </div>
 </body>
 </html>`
@@ -141,7 +154,6 @@ export default function MarketingEmailPage() {
     const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(0)
 
     // Editor & Preview state
-    const [previewMode, setPreviewMode] = useState<'preview' | 'code'>('preview')
     const [useSampleDataInPreview, setUseSampleDataInPreview] = useState<boolean>(true)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const [copiedVariable, setCopiedVariable] = useState<string | null>(null)
@@ -178,9 +190,13 @@ export default function MarketingEmailPage() {
             const data = await res.json()
             if (res.ok && Array.isArray(data.users)) {
                 setDatabaseUsers(data.users)
-                // Default select all valid emails
-                const validEmails = data.users.filter((u: UserProfile) => u.email).map((u: UserProfile) => u.email)
-                setSelectedRecipientEmails(new Set(validEmails))
+
+                // Select only Opted In recipients by default
+                const optedInEmails = data.users
+                    .filter((u: UserProfile) => u.email && u.opt_in !== false && u.unsubscribed !== true && u.email_subscribed !== false)
+                    .map((u: UserProfile) => u.email)
+
+                setSelectedRecipientEmails(new Set(optedInEmails))
             } else {
                 toast({
                     title: 'Error loading users',
@@ -200,14 +216,15 @@ export default function MarketingEmailPage() {
         }
     }
 
-    // Combine database users and custom added recipients
+    // Combine database users and custom added recipients with opt_in status
     const allRecipientsList: Recipient[] = [
         ...databaseUsers.map(u => ({
             id: u.id,
             email: u.email,
             first_name: u.first_name,
             last_name: u.last_name,
-            source: 'database' as const
+            source: 'database' as const,
+            opt_in: u.opt_in !== false && u.unsubscribed !== true && u.email_subscribed !== false
         })),
         ...customRecipients
     ]
@@ -220,16 +237,27 @@ export default function MarketingEmailPage() {
         return r.email.toLowerCase().includes(q) || fullName.includes(q)
     })
 
-    // Select All / Deselect All Handlers
-    const isAllSelected = filteredRecipients.length > 0 && filteredRecipients.every(r => selectedRecipientEmails.has(r.email))
-    const isSomeSelected = filteredRecipients.some(r => selectedRecipientEmails.has(r.email)) && !isAllSelected
+    // Filtered Opt-in list
+    const optedInRecipients = filteredRecipients.filter(r => r.opt_in)
+
+    // Select All / Deselect All Handlers (Targets Opted In recipients by default)
+    const isAllOptedInSelected = optedInRecipients.length > 0 && optedInRecipients.every(r => selectedRecipientEmails.has(r.email))
 
     const toggleSelectAll = () => {
         const nextSet = new Set(selectedRecipientEmails)
-        if (isAllSelected) {
-            filteredRecipients.forEach(r => nextSet.delete(r.email))
+        if (isAllOptedInSelected) {
+            // Deselect all filtered opted-in recipients
+            optedInRecipients.forEach(r => nextSet.delete(r.email))
         } else {
-            filteredRecipients.forEach(r => nextSet.add(r.email))
+            // Select all opted-in recipients
+            optedInRecipients.forEach(r => nextSet.add(r.email))
+            const optedOutCount = filteredRecipients.length - optedInRecipients.length
+            if (optedOutCount > 0) {
+                toast({
+                    title: 'Opted-Out Users Skipped',
+                    description: `Automatically skipped ${optedOutCount} opted-out recipient(s).`,
+                })
+            }
         }
         setSelectedRecipientEmails(nextSet)
     }
@@ -273,7 +301,8 @@ export default function MarketingEmailPage() {
             email: trimmedEmail,
             first_name: firstName,
             last_name: lastName,
-            source: 'custom'
+            source: 'custom',
+            opt_in: true
         }
 
         setCustomRecipients(prev => [...prev, newRecipient])
@@ -283,7 +312,7 @@ export default function MarketingEmailPage() {
 
         toast({
             title: 'Recipient Added',
-            description: `Added ${trimmedEmail} to list.`,
+            description: `Added ${trimmedEmail} (Opted In) to list.`,
         })
     }
 
@@ -294,6 +323,12 @@ export default function MarketingEmailPage() {
             next.delete(email)
             return next
         })
+    }
+
+    // Toggle custom opt-in status for a recipient
+    const toggleOptInStatus = (email: string) => {
+        setCustomRecipients(prev => prev.map(r => r.email === email ? { ...r, opt_in: !r.opt_in } : r))
+        setDatabaseUsers(prev => prev.map(u => u.email === email ? { ...u, opt_in: u.opt_in === false } : u))
     }
 
     // Insert dynamic variable at cursor in HTML editor
@@ -331,10 +366,12 @@ export default function MarketingEmailPage() {
         const sampleRecipient: Recipient = {
             email: 'alex.smith@example.com',
             first_name: 'Alex',
-            last_name: 'Smith'
+            last_name: 'Smith',
+            opt_in: true
         }
 
         const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        const unsubUrl = `https://updates.syncflo.xyz/unsubscribe?email=${encodeURIComponent(sampleRecipient.email)}`
 
         return htmlContent
             .replace(/\{\{\s*first_name\s*\}\}/gi, sampleRecipient.first_name!)
@@ -342,6 +379,7 @@ export default function MarketingEmailPage() {
             .replace(/\{\{\s*name\s*\}\}/gi, `${sampleRecipient.first_name} ${sampleRecipient.last_name}`)
             .replace(/\{\{\s*email\s*\}\}/gi, sampleRecipient.email)
             .replace(/\{\{\s*date\s*\}\}/gi, today)
+            .replace(/\{\{\s*unsubscribe_url\s*\}\}/gi, unsubUrl)
     }
 
     const getRenderedPreviewSubject = () => {
@@ -428,6 +466,8 @@ export default function MarketingEmailPage() {
             setSending(false)
         }
     }
+
+    const totalOptedOut = allRecipientsList.filter(r => !r.opt_in).length
 
     return (
         <div className="space-y-6 pb-12">
@@ -565,9 +605,9 @@ export default function MarketingEmailPage() {
 
                     {/* Split View: HTML Code vs Rendered Preview */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Editor Panel */}
-                        <Card className="border-slate-200 shadow-sm rounded-2xl flex flex-col h-[650px]">
-                            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+                        {/* Editor Panel - Fixed overflow container */}
+                        <Card className="border-slate-200 shadow-sm rounded-2xl flex flex-col h-[650px] overflow-hidden">
+                            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between shrink-0">
                                 <div>
                                     <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-900">
                                         <Code className="w-4 h-4 text-indigo-600" /> HTML Editor
@@ -580,20 +620,20 @@ export default function MarketingEmailPage() {
                                     {htmlContent.length} chars
                                 </Badge>
                             </CardHeader>
-                            <CardContent className="p-0 flex-1 relative">
+                            <CardContent className="p-0 flex-1 min-h-0 overflow-hidden relative">
                                 <Textarea
                                     ref={textareaRef}
                                     value={htmlContent}
                                     onChange={(e) => setHtmlContent(e.target.value)}
                                     placeholder="<html><body><h1>Your email content...</h1></body></html>"
-                                    className="w-full h-full p-4 font-mono text-xs leading-relaxed text-slate-800 bg-slate-950/5 border-0 focus-visible:ring-0 resize-none rounded-b-2xl"
+                                    className="w-full h-full p-4 font-mono text-xs leading-relaxed text-slate-800 bg-slate-950/5 border-0 focus-visible:ring-0 resize-none rounded-b-2xl overflow-auto"
                                 />
                             </CardContent>
                         </Card>
 
-                        {/* Live Preview Panel */}
+                        {/* Live Preview Panel - Fixed overflow container */}
                         <Card className="border-slate-200 shadow-sm rounded-2xl flex flex-col h-[650px] overflow-hidden">
-                            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+                            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50 shrink-0">
                                 <div>
                                     <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-900">
                                         <Eye className="w-4 h-4 text-emerald-600" /> Live HTML Preview
@@ -613,7 +653,7 @@ export default function MarketingEmailPage() {
                                     </label>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-0 flex-1 bg-slate-100">
+                            <CardContent className="p-0 flex-1 min-h-0 overflow-hidden bg-slate-100">
                                 <iframe
                                     srcDoc={getRenderedPreviewHtml()}
                                     title="Email Live Preview"
@@ -640,19 +680,25 @@ export default function MarketingEmailPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
+                                    {totalOptedOut > 0 && (
+                                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-2.5 py-1">
+                                            <AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-500" /> {totalOptedOut} Opted Out
+                                        </Badge>
+                                    )}
+
                                     <Button
-                                        variant={isAllSelected ? 'default' : 'outline'}
+                                        variant={isAllOptedInSelected ? 'default' : 'outline'}
                                         onClick={toggleSelectAll}
                                         className="rounded-xl"
                                         size="sm"
                                     >
-                                        {isAllSelected ? (
+                                        {isAllOptedInSelected ? (
                                             <>
-                                                <CheckSquare className="w-4 h-4 mr-2" /> Deselect All ({filteredRecipients.length})
+                                                <CheckSquare className="w-4 h-4 mr-2" /> Deselect All Opted In ({optedInRecipients.length})
                                             </>
                                         ) : (
                                             <>
-                                                <Square className="w-4 h-4 mr-2" /> Select All ({filteredRecipients.length})
+                                                <Square className="w-4 h-4 mr-2" /> Select All Opted In ({optedInRecipients.length})
                                             </>
                                         )}
                                     </Button>
@@ -704,28 +750,29 @@ export default function MarketingEmailPage() {
                                         <TableRow>
                                             <TableHead className="w-12 text-center">
                                                 <Checkbox
-                                                    checked={isAllSelected}
+                                                    checked={isAllOptedInSelected}
                                                     onCheckedChange={toggleSelectAll}
-                                                    aria-label="Select all"
+                                                    aria-label="Select all opted in"
                                                 />
                                             </TableHead>
                                             <TableHead className="font-semibold">Recipient / Email</TableHead>
                                             <TableHead className="font-semibold">Name</TableHead>
+                                            <TableHead className="font-semibold">Opt-in Status</TableHead>
                                             <TableHead className="font-semibold">Source</TableHead>
-                                            <TableHead className="w-24 text-right">Action</TableHead>
+                                            <TableHead className="w-28 text-right">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {loadingUsers ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                                                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
                                                     Loading platform users...
                                                 </TableCell>
                                             </TableRow>
                                         ) : filteredRecipients.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                                                     No recipients found matching &quot;{searchQuery}&quot;.
                                                 </TableCell>
                                             </TableRow>
@@ -751,6 +798,18 @@ export default function MarketingEmailPage() {
                                                                 <span className="text-slate-400 italic">No name provided</span>
                                                             )}
                                                         </TableCell>
+                                                        {/* Opt-in Status Badge */}
+                                                        <TableCell>
+                                                            {recipient.opt_in ? (
+                                                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold px-2.5 py-0.5 hover:bg-emerald-100 flex items-center w-max gap-1">
+                                                                    <UserCheck className="w-3 h-3 text-emerald-600" /> Optin
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge className="bg-red-100 text-red-800 border-red-300 font-semibold px-2.5 py-0.5 hover:bg-red-100 flex items-center w-max gap-1">
+                                                                    <UserX className="w-3 h-3 text-red-600" /> Opted Out
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
                                                         <TableCell>
                                                             {recipient.source === 'custom' ? (
                                                                 <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
@@ -762,7 +821,16 @@ export default function MarketingEmailPage() {
                                                                 </Badge>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell className="text-right">
+                                                        <TableCell className="text-right flex items-center justify-end gap-1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => toggleOptInStatus(recipient.email)}
+                                                                className="text-xs h-8 text-slate-600 hover:text-slate-900"
+                                                                title="Toggle Opt-in / Opted Out state"
+                                                            >
+                                                                Toggle
+                                                            </Button>
                                                             {recipient.source === 'custom' && (
                                                                 <Button
                                                                     variant="ghost"
@@ -793,7 +861,7 @@ export default function MarketingEmailPage() {
                                 <Sparkles className="w-5 h-5 text-amber-500" /> Usable Dynamic Variables
                             </CardTitle>
                             <CardDescription>
-                                You can place these dynamic placeholders inside your <strong>Subject Line</strong> or <strong>HTML Body</strong>.
+                                Place these dynamic placeholders inside your <strong>Subject Line</strong> or <strong>HTML Body</strong>.
                                 When sending emails, SyncFlo AI automatically replaces each tag with recipient-specific data.
                             </CardDescription>
                         </CardHeader>
@@ -827,7 +895,7 @@ export default function MarketingEmailPage() {
                                         </div>
 
                                         <p className="text-xs text-slate-600">{item.description}</p>
-                                        <div className="text-xs text-slate-500 font-mono bg-white p-2 rounded-lg border border-slate-200">
+                                        <div className="text-xs text-slate-500 font-mono bg-white p-2 rounded-lg border border-slate-200 truncate">
                                             Sample Output: <span className="font-semibold text-slate-800">{item.example}</span>
                                         </div>
                                     </div>
@@ -837,13 +905,16 @@ export default function MarketingEmailPage() {
                             {/* HTML Example Showcase */}
                             <div className="p-5 rounded-2xl bg-slate-900 text-slate-200 space-y-3">
                                 <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
-                                    <span>HTML Example Code</span>
+                                    <span>HTML Example Code with Unsubscribe Link</span>
                                     <span>Template snippet</span>
                                 </div>
                                 <pre className="font-mono text-xs text-emerald-400 overflow-x-auto p-3 bg-slate-950 rounded-xl leading-relaxed">
                                     {`<h2>Hello {{first_name}},</h2>
 <p>Your registered email address is <strong>{{email}}</strong>.</p>
-<p>Special offer valid through {{date}}.</p>`}
+<p>Special offer valid through {{date}}.</p>
+<footer style="margin-top: 20px;">
+  <a href="{{unsubscribe_url}}">Unsubscribe from emails</a>
+</footer>`}
                                 </pre>
                             </div>
                         </CardContent>
@@ -879,13 +950,6 @@ export default function MarketingEmailPage() {
                                     <Badge className="bg-blue-600 text-white font-bold px-2.5">
                                         {selectedRecipientEmails.size} Recipients Selected
                                     </Badge>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
-                                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                <div>
-                                    Emails will be individually personalized using dynamic tags before dispatch. Make sure your template looks good in the Live Preview tab.
                                 </div>
                             </div>
 

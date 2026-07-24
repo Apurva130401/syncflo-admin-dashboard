@@ -19,12 +19,15 @@ function replaceVariables(text: string, recipient: Recipient): string {
         day: 'numeric'
     })
 
+    const unsubscribeUrl = `https://updates.syncflo.xyz/unsubscribe?email=${encodeURIComponent(recipient.email)}`
+
     return text
         .replace(/\{\{\s*first_name\s*\}\}/gi, firstName || 'there')
         .replace(/\{\{\s*last_name\s*\}\}/gi, lastName)
         .replace(/\{\{\s*name\s*\}\}/gi, fullName)
         .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
         .replace(/\{\{\s*date\s*\}\}/gi, today)
+        .replace(/\{\{\s*unsubscribe_url\s*\}\}/gi, unsubscribeUrl)
 }
 
 export async function POST(request: NextRequest) {
