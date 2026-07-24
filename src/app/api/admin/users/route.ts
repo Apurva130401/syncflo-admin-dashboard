@@ -52,19 +52,34 @@ export async function DELETE(request: NextRequest) {
     try {
         const { userId } = await request.json()
 
-        const { error } = await supabase
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+        }
+
+        // 1. Permanently delete user from Supabase Auth (auth.users)
+        const { error: authError } = await supabase.auth.admin.deleteUser(userId)
+
+        if (authError) {
+            console.error('Error deleting auth user from Supabase auth.users:', authError)
+        }
+
+        // 2. Permanently delete user profile from public.profiles
+        const { error: profileError } = await supabase
             .from('profiles')
             .delete()
             .eq('id', userId)
 
-        if (error) {
-            console.error('Error deleting user:', error)
-            return NextResponse.json({ error: error.message }, { status: 500 })
+        if (profileError && authError) {
+            console.error('Error deleting user profile:', profileError)
+            return NextResponse.json(
+                { error: profileError.message || authError?.message || 'Failed to delete user' },
+                { status: 500 }
+            )
         }
 
         return NextResponse.json({ success: true })
     } catch (error) {
-        console.error('Server error:', error)
+        console.error('Server error during user deletion:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }
