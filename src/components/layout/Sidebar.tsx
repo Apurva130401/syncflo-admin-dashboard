@@ -25,14 +25,18 @@ import {
     DollarSign,
     Code,
     Clock,
-    Megaphone
+    Megaphone,
+    Bell
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppShell } from './app-shell-context'
+import { useUser } from '@/providers/user-provider'
+import { useNotificationStore } from '@/hooks/use-notifications'
 
 // Define all possible items with their required roles/permissions implicit in the logic
 const allItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', roles: ['all'] },
+    { icon: Bell, label: 'Notifications', href: '/dashboard/notifications', roles: ['all'] },
 
     // Growth / Marketing
     { icon: Target, label: 'CRM', href: '/dashboard/crm', roles: ['employee', 'admin', 'manager'] },
@@ -63,18 +67,29 @@ const allItems = [
 ]
 
 const navGroups = [
-    { label: 'Command', items: ['Dashboard', 'CRM', 'My Tasks', 'Marketing Email'] },
+    { label: 'Command', items: ['Dashboard', 'Notifications', 'CRM', 'My Tasks', 'Marketing Email'] },
     { label: 'People', items: ['All Users', 'User Activity', 'Attendance'] },
     { label: 'Operations', items: ['Verifications', 'Support Tickets', 'Inquiries', 'Custom Enquiries'] },
     { label: 'Finance', items: ['Invoices', 'Payroll', 'Revenue', 'Subscriptions'] },
     { label: 'System', items: ['System Monitoring', 'API & Logs', 'Settings'] },
 ]
-import { useUser } from '@/providers/user-provider'
 
 export function Sidebar() {
     const pathname = usePathname()
     const { sidebarCollapsed, toggleSidebar, mobileOpen, closeMobile } = useAppShell()
     const { profile } = useUser()
+    const { notifications, fetchRealNotifications, markRouteAsRead } = useNotificationStore()
+
+    React.useEffect(() => {
+        fetchRealNotifications()
+    }, [fetchRealNotifications])
+
+    // Automatically mark notifications for current route as read when user lands on page
+    React.useEffect(() => {
+        if (pathname) {
+            markRouteAsRead(pathname)
+        }
+    }, [pathname, markRouteAsRead])
 
     const navItems = React.useMemo(() => {
         const role = profile?.role || 'user'
@@ -98,6 +113,36 @@ export function Sidebar() {
             }))
             .filter((group) => group.items.length > 0)
     ), [navItems])
+
+    // Dynamic check if a specific sidebar page has unread notifications
+    const hasUnreadForItem = (href: string) => {
+        if (!notifications || notifications.length === 0) return false
+
+        return notifications.some((n) => {
+            if (n.read) return false
+
+            // Direct matching via actionUrl
+            if (n.actionUrl && (n.actionUrl === href || n.actionUrl.startsWith(href))) {
+                return true
+            }
+
+            // Category & ID matching
+            if (href === '/dashboard/notifications') return true
+            if (href === '/dashboard/support-tickets' && n.category === 'support') return true
+            if (href === '/dashboard/inquiries' && (n.category === 'support' || n.id.startsWith('inquiry-'))) return true
+            if (href === '/dashboard/custom-enquiries' && n.id.startsWith('inquiry-')) return true
+            if (href === '/dashboard/verifications' && (n.category === 'users' || n.id.startsWith('verification-'))) return true
+            if (href === '/dashboard/users' && n.category === 'users') return true
+            if (href === '/dashboard/activity' && n.category === 'users') return true
+            if (href === '/dashboard/tasks' && n.category === 'tasks') return true
+            if (href === '/dashboard/monitoring' && n.category === 'system') return true
+            if (href === '/dashboard/logs' && n.category === 'security') return true
+            if (href === '/dashboard/crm' && n.category === 'crm') return true
+            if ((href === '/dashboard/invoices' || href === '/dashboard/subscriptions' || href === '/dashboard/revenue' || href === '/dashboard/payroll') && n.category === 'finance') return true
+
+            return false
+        })
+    }
 
     return (
         <>
@@ -169,6 +214,8 @@ export function Sidebar() {
                             )}
                             {group.items.map((item) => {
                                 const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                                const hasUnread = hasUnreadForItem(item.href)
+
                                 return (
                                 <Link
                                     key={item.href}
@@ -186,9 +233,24 @@ export function Sidebar() {
                                     {isActive && (
                                         <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-emerald-400" />
                                     )}
-                                    <item.icon className={cn("h-5 w-5 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700")} />
-                                    {!sidebarCollapsed && <span className="font-semibold">{item.label}</span>}
-                            </Link>
+                                    <div className="relative flex items-center justify-center">
+                                        <item.icon className={cn("h-5 w-5 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700")} />
+                                        {sidebarCollapsed && hasUnread && (
+                                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                                            </span>
+                                        )}
+                                    </div>
+                                    {!sidebarCollapsed && <span className="font-semibold flex-1">{item.label}</span>}
+                                    
+                                    {!sidebarCollapsed && hasUnread && (
+                                        <span className="relative flex h-2.5 w-2.5 shrink-0 ml-auto">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                                        </span>
+                                    )}
+                                </Link>
                         )
                     })}
                         </div>

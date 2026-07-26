@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
-import { Search } from 'lucide-react'
+import { Search, RefreshCw, CreditCard } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface Subscription {
     id: string
@@ -31,55 +32,69 @@ export default function SubscriptionsPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
 
-    useEffect(() => {
-        const fetchSubscriptions = async () => {
-            try {
-                const response = await fetch('/api/admin/subscriptions')
-                const result = await response.json()
+    const fetchSubscriptions = async () => {
+        setLoading(true)
+        try {
+            const response = await fetch('/api/admin/subscriptions')
+            const result = await response.json()
 
-                if (!response.ok) {
-                    console.error('Error fetching subscriptions:', result.error)
-                    return
-                }
-
-                setSubscriptions(result.subscriptions || [])
-            } catch (error) {
-                console.error('Exception during fetch:', error)
-            } finally {
-                setLoading(false)
+            if (!response.ok) {
+                console.error('Error fetching subscriptions:', result.error)
+                return
             }
-        }
 
+            setSubscriptions(result.subscriptions || [])
+        } catch (error) {
+            console.error('Exception during fetch:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
         fetchSubscriptions()
     }, [])
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'active':
-                return 'default'
+                return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            case 'trial':
+                return 'bg-sky-100 text-sky-800 border-sky-200'
             case 'inactive':
             case 'cancelled':
-                return 'destructive'
+                return 'bg-rose-100 text-rose-800 border-rose-200'
             case 'pending':
-                return 'secondary'
+                return 'bg-amber-100 text-amber-800 border-amber-200'
             default:
-                return 'outline'
+                return 'bg-slate-100 text-slate-700 border-slate-200'
         }
     }
 
     const getUserName = (subscription: Subscription) => {
         const profile = subscription.profiles
         if (profile?.first_name || profile?.last_name) {
-            return `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+            const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+            if (name) return name
         }
-        return profile?.email || 'Unknown User'
+        if (profile?.email && !profile.email.startsWith('User #')) {
+            return profile.email.split('@')[0]
+        }
+        if (profile?.email) {
+            return profile.email
+        }
+        return `User #${subscription.user_id ? subscription.user_id.slice(0, 8) : 'N/A'}`
+    }
+
+    const getUserEmail = (subscription: Subscription) => {
+        return subscription.profiles?.email || 'N/A'
     }
 
     const filteredSubscriptions = subscriptions.filter((subscription) => {
         const userName = getUserName(subscription).toLowerCase()
-        const userEmail = subscription.profiles?.email?.toLowerCase() || ''
-        const plan = subscription.current_plan?.toLowerCase() || ''
-        const status = subscription.subscription_status?.toLowerCase() || ''
+        const userEmail = getUserEmail(subscription).toLowerCase()
+        const plan = (subscription.current_plan || '').toLowerCase()
+        const status = (subscription.subscription_status || '').toLowerCase()
         const search = searchTerm.toLowerCase()
 
         return userName.includes(search) ||
@@ -88,88 +103,120 @@ export default function SubscriptionsPage() {
             status.includes(search)
     })
 
-    if (loading) {
-        return <div className="flex justify-center items-center h-64">Loading subscriptions...</div>
+    const formatDateSafe = (dateStr?: string) => {
+        if (!dateStr) return 'N/A'
+        try {
+            return format(new Date(dateStr), 'MMM dd, yyyy')
+        } catch (e) {
+            return dateStr
+        }
     }
 
     return (
-        <div className="space-y-6">
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-slate-900 bg-clip-text text-transparent">
-                    Subscription Tracker
-                </h1>
-                <p className="text-slate-600 mt-2 text-lg">Monitor all user subscriptions and their status</p>
+        <div className="space-y-6 max-w-7xl mx-auto pb-12 text-slate-900">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight flex items-center gap-2">
+                        <CreditCard className="h-7 w-7 text-slate-950" />
+                        Subscription Tracker
+                    </h1>
+                    <p className="text-slate-500 mt-1 text-sm">Monitor all user subscriptions, trials, and active plans synced from Supabase</p>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchSubscriptions}
+                    disabled={loading}
+                    className="gap-2 text-slate-700 font-semibold border-slate-300"
+                >
+                    <RefreshCw className={`h-4 w-4 text-emerald-600 ${loading ? 'animate-spin' : ''}`} />
+                    Sync Subscriptions
+                </Button>
             </div>
 
-            <Card className="premium-card">
-                <CardHeader>
-                    <CardTitle>All Subscriptions ({filteredSubscriptions.length})</CardTitle>
-                    <CardDescription>
-                        View and manage user subscription details
-                    </CardDescription>
-                    <div className="flex items-center space-x-2 pt-4">
+            <Card className="border-slate-200 shadow-sm bg-white">
+                <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-lg font-bold text-slate-900">All Subscriptions ({filteredSubscriptions.length})</CardTitle>
+                            <CardDescription className="text-xs text-slate-500">
+                                View and manage user subscription details and plan statuses
+                            </CardDescription>
+                        </div>
                         <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                             <Input
                                 placeholder="Search by user, email, plan, or status..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
+                                className="pl-9 text-xs h-9 bg-white border-slate-200"
                             />
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
+                <CardContent className="p-0">
+                    <Table className="text-xs">
+                        <TableHeader className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase">
                             <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Plan</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Billing Cycle</TableHead>
-                                <TableHead>Start Date</TableHead>
-                                <TableHead>End Date</TableHead>
-                                <TableHead>Created</TableHead>
+                                <TableHead className="py-3">User</TableHead>
+                                <TableHead className="py-3">Plan</TableHead>
+                                <TableHead className="py-3">Status</TableHead>
+                                <TableHead className="py-3">Billing Cycle</TableHead>
+                                <TableHead className="py-3">Start Date</TableHead>
+                                <TableHead className="py-3">End Date</TableHead>
+                                <TableHead className="py-3">Created</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
-                            {filteredSubscriptions.map((subscription) => (
-                                <TableRow key={subscription.id}>
-                                    <TableCell>
-                                        <div>
-                                            <div className="font-medium">{getUserName(subscription)}</div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {subscription.profiles?.email}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>{subscription.current_plan || 'N/A'}</TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant={getStatusColor(subscription.subscription_status)}
-                                            className={subscription.subscription_status?.toLowerCase() === 'inactive' ? 'bg-red-500 text-white hover:bg-red-600' : ''}
-                                        >
-                                            {subscription.subscription_status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{subscription.billing_cycle || 'N/A'}</TableCell>
-                                    <TableCell>
-                                        {subscription.subscription_start_date
-                                            ? format(new Date(subscription.subscription_start_date), 'MMM dd, yyyy')
-                                            : 'N/A'
-                                        }
-                                    </TableCell>
-                                    <TableCell>
-                                        {subscription.subscription_end_date
-                                            ? format(new Date(subscription.subscription_end_date), 'MMM dd, yyyy')
-                                            : 'N/A'
-                                        }
-                                    </TableCell>
-                                    <TableCell>
-                                        {format(new Date(subscription.created_at), 'MMM dd, yyyy')}
+                        <TableBody className="divide-y divide-slate-100">
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-10 text-slate-400 font-medium">
+                                        <RefreshCw className="h-6 w-6 mx-auto animate-spin text-emerald-600 mb-2" />
+                                        Loading user subscriptions from database...
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : filteredSubscriptions.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-10 text-slate-400 font-medium">
+                                        No subscription records match your search.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredSubscriptions.map((subscription) => (
+                                    <TableRow key={subscription.id} className="hover:bg-slate-50/80 transition-colors">
+                                        <TableCell className="py-3.5">
+                                            <div>
+                                                <div className="font-bold text-slate-900">{getUserName(subscription)}</div>
+                                                <div className="text-slate-500 text-[11px]">
+                                                    {getUserEmail(subscription)}
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-3.5 font-bold text-slate-800">
+                                            {subscription.current_plan || 'Free Trial'}
+                                        </TableCell>
+                                        <TableCell className="py-3.5">
+                                            <Badge
+                                                className={`text-[10px] font-extrabold uppercase px-2 py-0.5 border ${getStatusColor(subscription.subscription_status)}`}
+                                            >
+                                                {subscription.subscription_status || 'trial'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="py-3.5 capitalize font-medium text-slate-700">
+                                            {subscription.billing_cycle || 'N/A'}
+                                        </TableCell>
+                                        <TableCell className="py-3.5 text-slate-600">
+                                            {formatDateSafe(subscription.subscription_start_date)}
+                                        </TableCell>
+                                        <TableCell className="py-3.5 text-slate-600">
+                                            {formatDateSafe(subscription.subscription_end_date)}
+                                        </TableCell>
+                                        <TableCell className="py-3.5 text-slate-500">
+                                            {formatDateSafe(subscription.created_at)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
