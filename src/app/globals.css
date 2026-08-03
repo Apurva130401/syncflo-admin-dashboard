@@ -153,3 +153,13 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Hides native scrollbar on elements that have a custom scrollbar substitute
+   (e.g. the CRM table's pinned bottom horizontal scrollbar) */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

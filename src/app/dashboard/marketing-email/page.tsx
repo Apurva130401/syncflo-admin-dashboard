@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,6 +54,13 @@ interface Recipient {
     source?: 'database' | 'custom'
     opt_in: boolean
 }
+
+const SENDER_OPTIONS = [
+    { label: 'SyncFlo AI - marketing@updates.syncflo.xyz', value: 'SyncFlo AI <marketing@updates.syncflo.xyz>' },
+    { label: 'SyncFlo AI - news@updates.syncflo.xyz', value: 'SyncFlo AI <news@updates.syncflo.xyz>' },
+    { label: 'SyncFlo AI - growth@updates.syncflo.xyz', value: 'SyncFlo AI <growth@updates.syncflo.xyz>' },
+    { label: 'SyncFlo AI - offers@updates.syncflo.xyz', value: 'SyncFlo AI <offers@updates.syncflo.xyz>' },
+]
 
 const DYNAMIC_VARIABLES = [
     { tag: '{{first_name}}', label: 'First Name', example: 'Apurva', description: "Recipient's first name (falls back to 'there')" },
@@ -149,6 +157,7 @@ export default function MarketingEmailPage() {
     const { toast } = useToast()
 
     // Email state
+    const [fromSender, setFromSender] = useState(SENDER_OPTIONS[0].value)
     const [subject, setSubject] = useState(DEFAULT_TEMPLATES[0].subject)
     const [htmlContent, setHtmlContent] = useState(DEFAULT_TEMPLATES[0].html)
     const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number>(0)
@@ -438,6 +447,7 @@ export default function MarketingEmailPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    from: fromSender,
                     subject,
                     html: htmlContent,
                     recipients: recipientsToSend
@@ -566,11 +576,18 @@ export default function MarketingEmailPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">From Sender</label>
-                                    <Input
-                                        value="SyncFlo AI <marketing@updates.syncflo.xyz>"
-                                        disabled
-                                        className="bg-slate-50 text-slate-700 font-mono text-xs font-medium rounded-xl border-slate-200"
-                                    />
+                                    <Select value={fromSender} onValueChange={setFromSender}>
+                                        <SelectTrigger className="bg-slate-50 text-slate-700 font-mono text-xs font-medium rounded-xl border-slate-200 h-10">
+                                            <SelectValue placeholder="Select sender address" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {SENDER_OPTIONS.map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value} className="font-mono text-xs">
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Subject Line</label>
@@ -939,7 +956,7 @@ export default function MarketingEmailPage() {
                             <div className="bg-slate-50 p-4 rounded-xl space-y-2 text-sm border border-slate-200">
                                 <div className="flex justify-between border-b border-slate-200 pb-2">
                                     <span className="text-slate-500 font-medium">From Address:</span>
-                                    <span className="font-mono text-slate-800 text-xs font-semibold">SyncFlo AI &lt;marketing@updates.syncflo.xyz&gt;</span>
+                                    <span className="font-mono text-slate-800 text-xs font-semibold">{fromSender}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-slate-200 pb-2">
                                     <span className="text-slate-500 font-medium">Subject Line:</span>

@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { subject, html, recipients } = body as {
+        const { from, subject, html, recipients } = body as {
+            from?: string
             subject: string
             html: string
             recipients: Recipient[]
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
         }
 
         const resend = new Resend(apiKey)
-        const fromAddress = 'SyncFlo AI <marketing@updates.syncflo.xyz>'
+        const fromAddress = from || 'SyncFlo AI <marketing@updates.syncflo.xyz>'
 
         const results: Array<{ email: string; success: boolean; id?: string; error?: string }> = []
         let sentCount = 0
