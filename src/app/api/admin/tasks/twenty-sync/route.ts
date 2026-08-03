@@ -62,7 +62,7 @@ export async function GET() {
     }
 
     try {
-        const response = await fetch(`${baseUrl}/api`, {
+        const response = await fetch(`${baseUrl}/graphql`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
